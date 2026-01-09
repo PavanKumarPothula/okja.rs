@@ -10,10 +10,33 @@
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
+use esp_hal::assign_resources;
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::timer::timg::TimerGroup;
 use log::info;
+assign_resources! {
+    Resources<'d>{
+    led :LedResource<'d>{
+        led_pin: GPIO38,
+    },
+    display: SPIResources<'d>{
+d0:GPIO39 ,
+d1:GPIO40 ,
+d2:GPIO41 ,
+d3:GPIO42 ,
+d4:GPIO45 ,
+d5:GPIO46 ,
+d6:GPIO47 ,
+d7:GPIO48 ,
+res:GPIO5  ,
+cs:GPIO6  ,
+dc:GPIO7  ,
+wr:GPIO8  ,
+rd:GPIO9  ,
+    }
+    }
+}
 
 extern crate alloc;
 
@@ -25,15 +48,27 @@ esp_bootloader_esp_idf::esp_app_desc!();
     clippy::large_stack_frames,
     reason = "it's not unusual to allocate larger buffers etc. in main"
 )]
+#[embassy_executor::task]
+async fn blink(mut led: Output<'static>) {
+    loop {
+        led.set_high();
+        info!("Hello world!");
+        Timer::after(Duration::from_secs(1)).await;
+        led.set_low();
+        info!("Byeworld!");
+        Timer::after(Duration::from_secs(1)).await;
+    }
+}
 #[esp_rtos::main]
-async fn main(spawner: Spawner) -> ! {
+async fn main(spawner: Spawner) {
     // generator version: 1.1.0
 
     esp_println::logger::init_logger_from_env();
 
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
-    let mut led = Output::new(peripherals.GPIO38, Level::Low, OutputConfig::default());
+    let r = split_resources!(peripherals);
+    let led = Output::new(r.led.led_pin, Level::Low, OutputConfig::default());
 
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     esp_rtos::start(timg0.timer0);
@@ -42,15 +77,5 @@ async fn main(spawner: Spawner) -> ! {
 
     // TODO: Spawn some tasks
     let _ = spawner;
-
-    loop {
-        led.set_high();
-        info!("Hello world!");
-        Timer::after(Duration::from_secs(1)).await;
-        led.set_low();
-        info!("Hello world!");
-        Timer::after(Duration::from_secs(1)).await;
-    }
-
-    // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v~1.0/examples
+    spawner.spawn(blink(led)).unwrap();
 }
