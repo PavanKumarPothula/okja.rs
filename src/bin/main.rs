@@ -7,22 +7,38 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+use core::any::Any;
+use core::cell::RefCell;
+
 use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
-use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
+use embassy_time::{Delay, Duration, Timer};
+use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
-use esp_hal::assign_resources;
 use esp_hal::clock::CpuClock;
+use esp_hal::dma::DmaRxBuf;
+use esp_hal::efuse::VDD_SPI_DREFL;
 use esp_hal::gpio::{Level, Output, OutputConfig};
+use esp_hal::spi::master::{Config, Spi, SpiDma, SpiDmaBus};
 use esp_hal::timer::timg::TimerGroup;
+use esp_hal::{assign_resources, dma};
+
 use log::info;
+
+use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
+
 use mipidsi::interface::{Generic8BitBus, ParallelInterface};
-use mipidsi::options::{ColorOrder, Orientation, RefreshOrder};
+use mipidsi::options::{ColorOrder, Orientation};
 use mipidsi::{Builder, models::ST7789};
+
+// use mousefood::ratatui::Terminal;
+// use mousefood::*;
+
+use embedded_sdmmc::{BlockDevice, Mode as FileMode, SdCard, VolumeIdx, VolumeManager};
+
 assign_resources! {
     Resources<'d>{
     led :LedResource<'d>{
-        led_pin: GPIO0,
+        led_pin          : GPIO0,
     },
     display: DisplayResources<'d>{
         d0               : GPIO39 ,
@@ -40,7 +56,29 @@ assign_resources! {
         read_pin         : GPIO9  ,
         power_pin        : GPIO15 ,
         backlight_pin    : GPIO38 ,
+    },
+    sdcard: SDCardResources<'d>{
+        spi_module       : SPI2,
+        spi_sck          : GPIO2 ,
+        spi_miso         : GPIO3 ,
+        spi_mosi         : GPIO10,
+        spi_cs           : GPIO11,
+        dma              : DMA_CH0,
     }
+    }
+}
+struct DummyTimeSource;
+
+impl embedded_sdmmc::TimeSource for DummyTimeSource {
+    fn get_timestamp(&self) -> embedded_sdmmc::Timestamp {
+        embedded_sdmmc::Timestamp {
+            year_since_1970: 0,
+            zero_indexed_month: 0,
+            zero_indexed_day: 0,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+        }
     }
 }
 
@@ -55,6 +93,20 @@ esp_bootloader_esp_idf::esp_app_desc!();
     reason = "it's not unusual to allocate larger buffers etc. in main"
 )]
 // Init_done
+#[embassy_executor::task]
+async fn sdcard_task(r: SDCardResources<'static>) {
+    let spi_interface = Spi::new(r.spi_module, Config::default())
+        .unwrap()
+        .with_sck(r.spi_sck)
+        .with_mosi(r.spi_mosi)
+        .with_miso(r.spi_miso);
+    let spi_cs = Output::new(r.spi_cs, Level::High, OutputConfig::default());
+    let spi_cell = RefCell::new(spi_interface);
+    let spi_shared_bus =
+        embedded_hal_bus::spi::RefCellDevice::new(&spi_cell, spi_cs, Delay).unwrap();
+    let sdcard = SdCard::new(spi_shared_bus, Delay);
+    info!("sdcard size: {}", sdcard.num_bytes().unwrap());
+}
 #[embassy_executor::task]
 async fn display_task(r: DisplayResources<'static>) {
     let mut _pwr_pin = Output::new(r.power_pin, Level::High, OutputConfig::default());
@@ -92,6 +144,9 @@ async fn display_task(r: DisplayResources<'static>) {
         .invert_colors(mipidsi::options::ColorInversion::Inverted)
         .init(&mut delay)
         .unwrap();
+    // [TODO] Use ratatui to create UIs
+    // let backend = EmbeddedBackend::new(display_object, EmbeddedBackendConfig::default());
+    // let terminal = Terminal::new(backend)?;
     loop {
         info!("RED");
         Timer::after(Duration::from_secs(1)).await;
@@ -133,5 +188,6 @@ async fn main(spawner: Spawner) {
     // TODO: Spawn some tasks
     let _ = spawner;
     // spawner.spawn(blink(r.led)).unwrap();
-    spawner.spawn(display_task(r.display)).unwrap();
+    // spawner.spawn(display_task(r.display)).unwrap();
+    spawner.spawn(sdcard_task(r.sdcard)).unwrap();
 }

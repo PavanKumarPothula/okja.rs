@@ -39,6 +39,8 @@ embedded-graphics = "0.8.1"
 mipidsi = "0.9.0"
 embedded-hal-bus = "0.3.0"
 display-interface-parallel-gpio = "0.7.0"
+#mousefood = "0.2.1"
+embedded-sdmmc = "0.9.0"
 
 
 [profile.dev]
