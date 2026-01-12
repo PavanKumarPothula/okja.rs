@@ -8,19 +8,16 @@
 #![deny(clippy::large_stack_frames)]
 
 use embassy_executor::Spawner;
-use embassy_time::{Delay, Duration, Timer};
+use embassy_time::{Duration, Timer};
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 use esp_backtrace as _;
 use esp_hal::assign_resources;
 use esp_hal::clock::CpuClock;
-use esp_hal::gpio::{Level, Output, OutputConfig, OutputPin};
-use esp_hal::peripherals::{Peripherals, SPI2};
-use esp_hal::spi::master::{Config, Spi};
+use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::timer::timg::TimerGroup;
 use log::info;
-use mipidsi::Display;
-use mipidsi::interface::{Generic8BitBus, Generic16BitBus, OutputBus, ParallelInterface};
-use mipidsi::options::Orientation;
+use mipidsi::interface::{Generic8BitBus, ParallelInterface};
+use mipidsi::options::{ColorOrder, Orientation, RefreshOrder};
 use mipidsi::{Builder, models::ST7789};
 assign_resources! {
     Resources<'d>{
@@ -28,22 +25,21 @@ assign_resources! {
         led_pin: GPIO0,
     },
     display: DisplayResources<'d>{
-        spi_cs: GPIO
-        d0:GPIO39 ,
-        d1:GPIO40 ,
-        d2:GPIO41 ,
-        d3:GPIO42 ,
-        d4:GPIO45 ,
-        d5:GPIO46 ,
-        d6:GPIO47 ,
-        d7:GPIO48 ,
-        res:GPIO5  ,
-        cs:GPIO6  ,
-        dc:GPIO7  ,
-        wr:GPIO8  ,
-        rd:GPIO9  ,
-        pwr:GPIO15,
-        bl: GPIO38,
+        d0               : GPIO39 ,
+        d1               : GPIO40 ,
+        d2               : GPIO41 ,
+        d3               : GPIO42 ,
+        d4               : GPIO45 ,
+        d5               : GPIO46 ,
+        d6               : GPIO47 ,
+        d7               : GPIO48 ,
+        reset_pin        : GPIO5  ,
+        chip_select      : GPIO6  ,
+        data_command_pin : GPIO7  ,
+        write_pin        : GPIO8  ,
+        read_pin         : GPIO9  ,
+        power_pin        : GPIO15 ,
+        backlight_pin    : GPIO38 ,
     }
     }
 }
@@ -58,12 +54,14 @@ esp_bootloader_esp_idf::esp_app_desc!();
     clippy::large_stack_frames,
     reason = "it's not unusual to allocate larger buffers etc. in main"
 )]
+// Init_done
 #[embassy_executor::task]
 async fn display_task(r: DisplayResources<'static>) {
-    let mut pwr_pin = Output::new(r.pwr, Level::High, OutputConfig::default());
-    pwr_pin.set_high();
-    let mut backlight = Output::new(r.bl, Level::High, OutputConfig::default());
-    backlight.set_high();
+    let mut _pwr_pin = Output::new(r.power_pin, Level::High, OutputConfig::default());
+    let mut _backlight = Output::new(r.backlight_pin, Level::High, OutputConfig::default());
+    let mut _read = Output::new(r.read_pin, Level::High, OutputConfig::default());
+    let mut _chip_sel = Output::new(r.chip_select, Level::Low, OutputConfig::default());
+
     let pin_bank = (
         Output::new(r.d0, Level::Low, OutputConfig::default()),
         Output::new(r.d1, Level::Low, OutputConfig::default()),
@@ -74,24 +72,27 @@ async fn display_task(r: DisplayResources<'static>) {
         Output::new(r.d6, Level::Low, OutputConfig::default()),
         Output::new(r.d7, Level::Low, OutputConfig::default()),
     );
-    // let display_bus = Generic8BitBus::new(pin_bank);
-    // let display_interface = ParallelInterface::new(
-    //     display_bus,
-    //     Output::new(r.dc, Level::High, OutputConfig::default()),
-    //     Output::new(r.wr, Level::High, OutputConfig::default()),
-    // );
-    let display_bus = Spi::new(SPI2, Config::default())?
-        .with_sck(GPIO12)
-        .with_mosi(GPIO11)
-        .with_miso(GPIO13);
+    let display_bus = Generic8BitBus::new(pin_bank);
+    let display_interface = ParallelInterface::new(
+        display_bus,
+        Output::new(r.data_command_pin, Level::High, OutputConfig::default()),
+        Output::new(r.write_pin, Level::High, OutputConfig::default()),
+    );
+    let mut delay = embassy_time::Delay;
     let mut display_object = Builder::new(ST7789, display_interface)
-        .reset_pin(Output::new(r.res, Level::High, OutputConfig::default()))
+        .reset_pin(Output::new(
+            r.reset_pin,
+            Level::High,
+            OutputConfig::default(),
+        ))
         .display_size(170, 320)
+        .display_offset(35, 0)
+        .color_order(ColorOrder::Rgb)
+        .orientation(Orientation::default().rotate(mipidsi::options::Rotation::Deg90))
         .invert_colors(mipidsi::options::ColorInversion::Inverted)
-        .init(&mut Delay)
+        .init(&mut delay)
         .unwrap();
     loop {
-        display_object.clear(Rgb565::RED).unwrap();
         info!("RED");
         Timer::after(Duration::from_secs(1)).await;
         display_object.clear(Rgb565::BLUE).unwrap();
