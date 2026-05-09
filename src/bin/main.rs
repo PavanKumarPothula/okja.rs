@@ -10,13 +10,15 @@ use alloc::string::String;
 use embassy_executor::Spawner;
 use embassy_time::{Delay, Duration, Timer};
 use embedded_hal_bus::spi::ExclusiveDevice;
+use embedded_sdmmc::fat::Fat32Info;
+use embedded_sdmmc::filesystem::ToShortFileName;
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::spi::master::{Config, Spi, SpiDma, SpiDmaBus};
 use esp_hal::timer::timg::TimerGroup;
-use esp_hal::{assign_resources, dma};
-
+use esp_hal::{Blocking, assign_resources, dma};
+use esp_println::println;
 use log::info;
 
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
@@ -29,8 +31,7 @@ use mipidsi::{Builder, models::ST7789};
 // use mousefood::*;
 
 use embedded_sdmmc::{
-    Attributes, BlockDevice, Directory, LfnBuffer, Mode as FileMode, RawVolume, SdCard,
-    ShortFileName, VolumeIdx, VolumeManager,
+    Attributes, Block, BlockDevice, Directory, LfnBuffer, Mode as FileMode, RawFile, RawVolume, SdCard, ShortFileName, VolumeIdx, VolumeManager
 };
 
 assign_resources! {
@@ -81,11 +82,26 @@ impl embedded_sdmmc::TimeSource for DummyTimeSource {
 }
 
 // Init_done
-
-type VolumeManagerType = VolumeManager<
+type VolumeManagerType = embedded_sdmmc::VolumeManager<
     SdCard<ExclusiveDevice<Spi<'static, esp_hal::Blocking>, Output<'static>, Delay>, Delay>,
     DummyTimeSource,
+    255,
+    255,
+    1,
 >;
+// type VolumeManagerType = VolumeManager<
+//     SdCard<ExclusiveDevice<Spi<'static, esp_hal::Blocking>, Output<'static>, Delay>, Delay>,
+//     DummyTimeSource,
+// >;
+type DirectoryType<'a> = Directory<
+    'a,
+    SdCard<ExclusiveDevice<Spi<'static, Blocking>, Output<'static>, Delay>, Delay>,
+    DummyTimeSource,
+    255,
+    255,
+    1,
+>;
+
 type DisplayObjectType = mipidsi::Display<
     ParallelInterface<
         Generic8BitBus<
@@ -127,7 +143,9 @@ impl AppResources {
         let spi_cs = Output::new(r.spi_cs, Level::High, OutputConfig::default());
         let spi_cell = ExclusiveDevice::new(spi_interface, spi_cs, Delay).unwrap();
         let sdcard = SdCard::new(spi_cell, Delay);
-        VolumeManager::new(sdcard, DummyTimeSource)
+        info!("{:?}",sdcard.num_bytes().unwrap());
+        info!("{:?}",sdcard.get_card_type().unwrap());
+        VolumeManager::new_with_limits(sdcard, DummyTimeSource,0)
     }
 
     fn display_init(r: DisplayResources<'static>) -> DisplayObjectType {
@@ -198,18 +216,18 @@ async fn display_task(mut display_object: DisplayObjectType) {
 
 #[embassy_executor::task]
 async fn sdcard_task(volume_manager: VolumeManagerType) {
+    // volume_manager.read(RawFile::ne(&self, other), buffer)
     let volume_handle = volume_manager.open_volume(VolumeIdx(0)).unwrap();
     let root_dir = volume_handle.open_root_dir().unwrap();
-    let mut storage = [0; 512];
-    let mut buf = LfnBuffer::new(&mut storage);
-    fn iter_dir(dir_name: String) -> () {
-        root_dir
-            .open_dir(ShortFileName::create_from_str(&dir_name).unwrap())
-            .unwrap()
-            .iterate_dir_lfn(&mut buf, |file_name, buf| {
-                info!("{:?}", file_name.attributes);
-                if file_name.attributes.is_directory() {
-                    iter_dir(file_name);
+    fn iter_dir(dir_input: DirectoryType) {
+        let mut storage = [0; 512];
+        let mut buf = LfnBuffer::new(&mut storage);
+        info!("Listing {:?}", dir_input);
+        dir_input
+            .iterate_dir_lfn(&mut buf, |entry, buf| {
+                info!("{:?}", entry.attributes);
+                if entry.attributes.is_directory() {
+                    // iter_dir();
                 }
                 if let Some(buf) = buf {
                     info!(" {:?}", buf);
@@ -218,8 +236,29 @@ async fn sdcard_task(volume_manager: VolumeManagerType) {
                 }
             })
             .unwrap();
-    };
-    iter_dir(root_dir);
+    }
+
+    iter_dir(root_dir
+        .open_dir("/")
+        .unwrap());
+    // fn iter_dir(root_dir: Directory<'_, SdCard<ExclusiveDevice<Spi<'static, esp_hal::Blocking>, Output<'static>, Delay>, Delay>, DummyTimeSource, 4, 4, 1>)
+    //     dir_input
+    //         .open_dir(ShortFileName::create_from_str(&dir_input).unwrap())
+    //         .unwrap()
+    //         .iterate_dir_lfn(&mut buf, |file_name, buf| {
+    //             info!("{:?}", file_name.attributes);
+    //             if file_name.attributes.is_directory() {
+    //                 iter_dir(file_name);
+    //             }
+    //             if let Some(buf) = buf {
+    //                 info!(" {:?}", buf);
+    //             } else {
+    //                 info!(".");
+    //             }
+    //         })
+    //         .unwrap();
+    // };
+
     let flac_file = root_dir
         .open_file_in_dir(
             "Clipse, Pusha T, Malice - Inglorious Bastards.flac",
@@ -227,12 +266,18 @@ async fn sdcard_task(volume_manager: VolumeManagerType) {
         )
         .unwrap();
 }
+
+#[embassy_executor::task]
+async fn audio_task(){
+    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/Clipse, Pusha T, Malice - Ace Trumpets.flac");
+
+
+}
 extern crate alloc;
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
 esp_bootloader_esp_idf::esp_app_desc!();
-
 #[allow(
     clippy::large_stack_frames,
     reason = "it's not unusual to allocate larger buffers etc. in main"

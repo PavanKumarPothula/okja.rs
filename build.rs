@@ -1,7 +1,40 @@
 fn main() {
     linker_be_nice();
+    build_and_gen_bind_ffi_code();
     // make sure linkall.x is the last linker script (otherwise might cause problems with flip-link)
     println!("cargo:rustc-link-arg=-Tlinkall.x");
+}
+
+fn build_and_gen_bind_ffi_code() {
+    cc::Build::new()
+        // .compiler("xtensa-esp32s3-none-elf")
+        .include("vendor/")
+        .define("DR_FLAC_NO_STDIO", None)
+        .define("DR_FLAC_IMPLEMENTATION", None)
+        .file("vendor/dr_flac.c")
+        .compile("dr_flac");
+
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    bindgen::Builder::default()
+        .clang_arg("--target=xtensa-esp32s3-none-elf")
+        .ctypes_prefix("cty")
+        // The input header we would like to generate
+        // bindings for.
+        .header("vendor/dr_flac.h")
+        // Tell cargo to invalidate the built crate whenever any of the
+        // included header files changed.
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
+        .use_core()
+        // Finish the builder and generate the bindings.
+        .generate()
+        // Unwrap the Result and panic on failure.
+        .expect("Unable to generate bindings")
+        .write_to_file("src/audio/codec/flac/bindings.rs")
+        .unwrap();
+    // println!("cargo:rerun-if-changed=bindgen.h");
+    // println!("cargo:rerun-if-changed=minimp3.c");
 }
 
 fn linker_be_nice() {

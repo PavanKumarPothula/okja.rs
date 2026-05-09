@@ -1,0 +1,8 @@
+{
+    "chat.disableAIFeatures": true,
+    "rust-analyzer.cargo.target": "xtensa-esp32s3-none-elf",
+    "rust-analyzer.cargo.allFeatures": true,
+    "rust-analyzer.env": {
+        "RUSTUP_TOOLCHAIN": "esp"
+    }
+}
