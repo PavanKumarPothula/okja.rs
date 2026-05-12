@@ -11,7 +11,7 @@ fn main() {
 fn build_and_gen_bind_ffi_code() {
     cc::Build::new()
         // .compiler("xtensa-esp32s3-none-elf")
-        .include("vendor/")
+        .include("vendor/dr_libs")
         .define("DR_FLAC_NO_STDIO", None)
         .define("DR_FLAC_IMPLEMENTATION", None)
         .file("vendor/dr_flac.c")
@@ -26,7 +26,7 @@ fn build_and_gen_bind_ffi_code() {
         .ctypes_prefix("cty")
         // The input header we would like to generate
         // bindings for.
-        .header("vendor/dr_flac.h")
+        .header("vendor/dr_libs/dr_flac.h")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         // .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
