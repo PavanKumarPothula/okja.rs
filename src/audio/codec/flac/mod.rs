@@ -1,2 +1,2 @@
-mod bindings;
+mod dr_flac;
 pub mod flac;
