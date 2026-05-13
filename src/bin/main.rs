@@ -269,7 +269,7 @@ async fn sdcard_task(volume_manager: VolumeManagerType) {
 
 #[embassy_executor::task]
 async fn audio_task(){
-    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/Clipse, Pusha T, Malice - Ace Trumpets.flac");
+    // static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/Clipse, Pusha T, Malice - Ace Trumpets.flac");
 
 
 }
