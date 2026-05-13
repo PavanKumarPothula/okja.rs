@@ -1,3 +1,6 @@
 [submodule "dr_libs"]
 	path = vendor/dr_libs
 	url = https://github.com/mackron/dr_libs.git
+[submodule "vendor/miniflac-sys"]
+	path = vendor/miniflac-sys
+	url = https://github.com/kpfromer/miniflac-sys

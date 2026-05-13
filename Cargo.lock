@@ -1191,6 +1191,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3c8dda44ff03a2f238717214da50f65d5a53b45cd213a7370424ffdb6fae815"
 
 [[package]]
+name = "miniflac-sys"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "heapless 0.8.0",
+]
+
+[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1273,6 +1281,7 @@ dependencies = [
  "esp-println",
  "esp-rtos",
  "log",
+ "miniflac-sys",
  "mipidsi",
  "static_cell",
 ]

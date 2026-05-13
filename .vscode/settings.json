@@ -4,7 +4,8 @@
     "rust-analyzer.server.extraEnv": {
         "RUSTUP_TOOLCHAIN": "esp"
     },
-    "rust-analyzer.cargo.allTargets": true,
+    "rust-analyzer.cargo.allTargets": false,
     "rust-analyzer.check.targets": "xtensa-esp32s3-none-elf",
     "rust-analyzer.cargo.buildScripts.enable": true,
+    "rust-analyzer.cargo.buildScripts.invocationStrategy": "once",
 }

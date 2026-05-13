@@ -1,6 +1,6 @@
 fn main() {
     linker_be_nice();
-    build_and_gen_bind_ffi_code();    
+    build_and_gen_bind_ffi_code();
     // cc crate does not properly link the library with
     // the use of linkall.x below, so do it manually.
     println!("cargo:rustc-link-arg=-ldr_flac");
@@ -23,6 +23,7 @@ fn build_and_gen_bind_ffi_code() {
     bindgen::Builder::default()
         .clang_arg("--target=xtensa-esp32s3-none-elf")
         .clang_arg("-fretain-comments-from-system-headers")
+        .generate_comments(true)
         .ctypes_prefix("cty")
         // The input header we would like to generate
         // bindings for.
@@ -36,7 +37,11 @@ fn build_and_gen_bind_ffi_code() {
         // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings")
         .write_to_file(
-            std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("bindings.rs"),
+            std::path::PathBuf::from(
+                // std::env::var("OUT_DIR").unwrap()
+                "src/audio/codec/",
+            )
+            .join("dr_flac_bindings.rs"),
         )
         .unwrap();
     // println!("cargo:rerun-if-changed=bindgen.h");

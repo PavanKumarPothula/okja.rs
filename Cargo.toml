@@ -47,6 +47,8 @@ display-interface-parallel-gpio = "0.7.0"
 #mousefood = "0.2.1"
 embedded-sdmmc = "0.9.0"
 cty = "0.2.2"
+#libflac-sys = {version="0.3",features=["build-flac"]}
+miniflac-sys = {path="vendor/miniflac-sys"}
 #claxon = "0.4.3"
 
 
