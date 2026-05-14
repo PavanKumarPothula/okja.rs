@@ -1,2 +1,3 @@
 [toolchain]
 channel = "esp"
+targets = ["xtensa-esp32s3-none-elf"] # This does not affect the rust-analyzer but for build it works

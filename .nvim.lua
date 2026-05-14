@@ -11,6 +11,7 @@ rust_analyzer.server = { extraEnv = { RUST_TOOLCHAIN = "stable" } }
 
 -- Note the neovim name of the language server is rust_analyzer with an underscore.
 vim.lsp.config("rust_analyzer", {
+  	cmd = { "rustup", "run", "stable", "rust-analyzer" },
     settings = {
         ["rust-analyzer"] = rust_analyzer
     },

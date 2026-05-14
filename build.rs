@@ -1,9 +1,9 @@
 fn main() {
     linker_be_nice();
-    build_and_gen_bind_ffi_code();
+    // build_and_gen_bind_ffi_code();
     // cc crate does not properly link the library with
     // the use of linkall.x below, so do it manually.
-    println!("cargo:rustc-link-arg=-ldr_flac");
+    // println!("cargo:rustc-link-arg=-ldr_flac");
     // make sure linkall.x is the last linker script (otherwise might cause problems with flip-link)
     println!("cargo:rustc-link-arg=-Tlinkall.x");
 }

@@ -16,6 +16,7 @@ use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::spi::master::{Config, Spi, SpiDma, SpiDmaBus};
+use esp_hal::i2c::master::{I2c,Config};
 use esp_hal::timer::timg::TimerGroup;
 use esp_hal::{Blocking, assign_resources, dma};
 use esp_println::println;
@@ -31,9 +32,12 @@ use mipidsi::{Builder, models::ST7789};
 // use mousefood::*;
 
 use embedded_sdmmc::{
-    Attributes, Block, BlockDevice, Directory, LfnBuffer, Mode as FileMode, RawFile, RawVolume, SdCard, ShortFileName, VolumeIdx, VolumeManager
+    Attributes, Block, BlockDevice, Directory, LfnBuffer, Mode as FileMode, RawFile, RawVolume,
+    SdCard, ShortFileName, VolumeIdx, VolumeManager,
 };
+use okja::audio::codec;
 
+use tlv320dac3100::TLV320DAC3100;
 assign_resources! {
     Resources<'d>{
     led :LedResource<'d>{
@@ -63,6 +67,10 @@ assign_resources! {
         spi_mosi         : GPIO10,
         spi_cs           : GPIO11,
         dma              : DMA_CH0,
+    },
+    dac: DACResource<'d>{
+        i2c_module : I2C0,
+        
     }
     }
 }
@@ -143,9 +151,9 @@ impl AppResources {
         let spi_cs = Output::new(r.spi_cs, Level::High, OutputConfig::default());
         let spi_cell = ExclusiveDevice::new(spi_interface, spi_cs, Delay).unwrap();
         let sdcard = SdCard::new(spi_cell, Delay);
-        info!("{:?}",sdcard.num_bytes().unwrap());
-        info!("{:?}",sdcard.get_card_type().unwrap());
-        VolumeManager::new_with_limits(sdcard, DummyTimeSource,0)
+        info!("{:?}", sdcard.num_bytes().unwrap());
+        info!("{:?}", sdcard.get_card_type().unwrap());
+        VolumeManager::new_with_limits(sdcard, DummyTimeSource, 0)
     }
 
     fn display_init(r: DisplayResources<'static>) -> DisplayObjectType {
@@ -182,6 +190,9 @@ impl AppResources {
             .invert_colors(mipidsi::options::ColorInversion::Inverted)
             .init(&mut Delay)
             .unwrap()
+    }
+    fn audio_init(r: ) {
+        TLV320DAC3100::new()
     }
 }
 #[embassy_executor::task]
@@ -238,9 +249,7 @@ async fn sdcard_task(volume_manager: VolumeManagerType) {
             .unwrap();
     }
 
-    iter_dir(root_dir
-        .open_dir("/")
-        .unwrap());
+    iter_dir(root_dir.open_dir("/").unwrap());
     // fn iter_dir(root_dir: Directory<'_, SdCard<ExclusiveDevice<Spi<'static, esp_hal::Blocking>, Output<'static>, Delay>, Delay>, DummyTimeSource, 4, 4, 1>)
     //     dir_input
     //         .open_dir(ShortFileName::create_from_str(&dir_input).unwrap())
@@ -268,10 +277,11 @@ async fn sdcard_task(volume_manager: VolumeManagerType) {
 }
 
 #[embassy_executor::task]
-async fn audio_task(){
-    // static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/Clipse, Pusha T, Malice - Ace Trumpets.flac");
-
-
+async fn audio_task() {
+    static audio_filename: &str = "stereo.flac";
+    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
+    let decoder = codec::codec::Decoder::new(audio_filename, FLAC_AUDIO);
+    let pcm_samples = decoder.get_pcm_samples(FLAC_AUDIO);
 }
 extern crate alloc;
 
