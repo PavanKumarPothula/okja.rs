@@ -1,12 +1,10 @@
 {
     "chat.disableAIFeatures": true,
+    "rust-analyzer.server.path": "${workspaceFolder}/.vscode/ra-server.sh",
     "rust-analyzer.cargo.allTargets": false,
     "rust-analyzer.cargo.buildScripts.enable": true,
     "rust-analyzer.cargo.noDefaultFeatures": true,
     "rust-analyzer.cargo.buildScripts.invocationStrategy": "once",
-    "rust-analyzer.cargo.extraEnv": {
-        "RUSTUP_TOOLCHAIN": "esp"
-    },
     "rust-analyzer.cargo.target": "xtensa-esp32s3-none-elf",
     "rust-analyzer.check.overrideCommand": [
         "${workspaceFolder}/.vscode/bin/cargo",
@@ -19,9 +17,5 @@
     "rust-analyzer.check.targets": ["xtensa-esp32s3-none-elf"],
     "rust-analyzer.checkOnSave": true,
     "rust-analyzer.check.allTargets": false,
-    "rust-analyzer.server.extraEnv": {
-        "RUSTUP_TOOLCHAIN": "esp",
-        "PATH": "${workspaceFolder}/.vscode/bin:${env:HOME}/.rustup/toolchains/esp/bin:${env:HOME}/.cargo/bin:/usr/local/bin:/usr/bin:/bin"
-    },
     "rust-analyzer.procMacro.enable": true
 }
