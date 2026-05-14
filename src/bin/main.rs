@@ -14,11 +14,14 @@ use embedded_sdmmc::fat::Fat32Info;
 use embedded_sdmmc::filesystem::ToShortFileName;
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
-use esp_hal::gpio::{Level, Output, OutputConfig};
-use esp_hal::spi::master::{Config, Spi, SpiDma, SpiDmaBus};
-use esp_hal::i2c::master::{I2c,Config};
+use esp_hal::delay::Delay as esp_delay;
+use esp_hal::gpio::{Level, Output, OutputConfig, OutputPin};
+use esp_hal::i2c::master::{Config as I2CConfig, I2c};
+use esp_hal::i2s::master::{Config as I2SConfig, I2s, Instance, UnitConfig};
+use esp_hal::peripherals::{DMA_CH0, DMA_CH1, I2S0};
+use esp_hal::spi::master::{Config as SPIConfig, Spi, SpiDma, SpiDmaBus};
 use esp_hal::timer::timg::TimerGroup;
-use esp_hal::{Blocking, assign_resources, dma};
+use esp_hal::{Blocking, assign_resources, dma, dma_descriptors, i2c};
 use esp_println::println;
 use log::info;
 
@@ -38,6 +41,7 @@ use embedded_sdmmc::{
 use okja::audio::codec;
 
 use tlv320dac3100::TLV320DAC3100;
+use tlv320dac3100::typedefs::VolumeControl;
 assign_resources! {
     Resources<'d>{
     led :LedResource<'d>{
@@ -69,8 +73,15 @@ assign_resources! {
         dma              : DMA_CH0,
     },
     dac: DACResource<'d>{
-        i2c_module : I2C0,
-        
+        i2c_module  : I2C0,
+        i2c_scl     : GPIO16,
+        i2c_sda     : GPIO21,
+        i2s_module  : I2S0,
+        i2s_dma     : DMA_CH1,
+        i2s_dout    : GPIO17, // DATA - I2S data
+        i2s_ws      : GPIO18,   // LRCLOCK - Word select
+        i2s_bclk    : GPIO44, // BITCLOCK - I2S clock
+        dac_rst     : GPIO43,  // DAC Reset Pin
     }
     }
 }
@@ -90,6 +101,7 @@ impl embedded_sdmmc::TimeSource for DummyTimeSource {
 }
 
 // Init_done
+type TLVType = TLV320DAC3100<I2c<'static, Blocking>>;
 type VolumeManagerType = embedded_sdmmc::VolumeManager<
     SdCard<ExclusiveDevice<Spi<'static, esp_hal::Blocking>, Output<'static>, Delay>, Delay>,
     DummyTimeSource,
@@ -130,6 +142,7 @@ type DisplayObjectType = mipidsi::Display<
 >;
 
 struct AppResources {
+    dac_peripherals: TLVType,
     volume_manager: VolumeManagerType,
     display_object: DisplayObjectType,
 }
@@ -137,13 +150,14 @@ impl AppResources {
     #[allow(clippy::large_stack_frames)]
     fn new(r: Resources<'static>) -> Self {
         Self {
+            dac_peripherals: Self::audio_init(r.dac),
             volume_manager: Self::sdcard_init(r.sdcard),
             display_object: Self::display_init(r.display),
         }
     }
     #[allow(clippy::large_stack_frames)]
     fn sdcard_init(r: SDCardResources<'static>) -> VolumeManagerType {
-        let spi_interface = Spi::new(r.spi_module, Config::default())
+        let spi_interface = Spi::new(r.spi_module, SPIConfig::default())
             .unwrap()
             .with_sck(r.spi_sck)
             .with_mosi(r.spi_mosi)
@@ -191,8 +205,21 @@ impl AppResources {
             .init(&mut Delay)
             .unwrap()
     }
-    fn audio_init(r: ) {
-        TLV320DAC3100::new()
+    fn audio_init(r: DACResource<'static>) -> TLVType {
+        let mut rst_pin = Output::new(r.dac_rst, Level::Low, OutputConfig::default());
+        rst_pin.set_low();
+        esp_delay::default().delay_micros(100);
+        rst_pin.set_high();
+        let i2c_bus_instance = i2c::master::I2c::new(r.i2c_module, I2CConfig::default())
+            .unwrap()
+            .with_scl(r.i2c_scl)
+            .with_sda(r.i2c_sda);
+        let mut dacObj = TLV320DAC3100::new(i2c_bus_instance);
+        dacObj
+            .set_dac_volume_control(false, false, VolumeControl::IndependentChannels)
+            .unwrap();
+        // dacObj.set_beep_sin_x(1).unwrap();
+        (r,dacObj)
     }
 }
 #[embassy_executor::task]
@@ -277,11 +304,26 @@ async fn sdcard_task(volume_manager: VolumeManagerType) {
 }
 
 #[embassy_executor::task]
-async fn audio_task() {
+async fn audio_task(dac_peripherals: TLVType) {
     static audio_filename: &str = "stereo.flac";
     static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
     let decoder = codec::codec::Decoder::new(audio_filename, FLAC_AUDIO);
     let pcm_samples = decoder.get_pcm_samples(FLAC_AUDIO);
+    let i2s_driver = I2s::new(
+        dac_peripherals.i2s_module,
+        dac_peripherals.i2s_dma,
+        I2SConfig::default(),
+    )
+    .unwrap();
+    let (rx_descriptors, tx_descriptors) = dma_descriptors!(32000, 32000);
+    let mut i2s_tx_writer = i2s_driver
+        .i2s_tx
+        .with_bclk(dac_peripherals.i2s_bclk)
+        .with_dout(dac_peripherals.i2s_dout)
+        .with_ws(dac_peripherals.i2s_ws)
+        .build(tx_descriptors);
+    i2s_tx_writer.apply_config(&UnitConfig::default()).unwrap();
+    i2s_tx_writer.write_dma(&mut pcm_samples.samples());
 }
 extern crate alloc;
 
@@ -313,7 +355,10 @@ async fn main(spawner: Spawner) {
     // spawner
     //     .spawn(display_task(app_resource.display_object))
     //     .unwrap();
+    // spawner
+    //     .spawn(sdcard_task(app_resource.volume_manager))
+    //     .unwrap();
     spawner
-        .spawn(sdcard_task(app_resource.volume_manager))
+        .spawn(audio_task(app_resource.dac_peripherals))
         .unwrap();
 }

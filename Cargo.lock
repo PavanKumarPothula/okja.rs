@@ -679,16 +679,16 @@ dependencies = [
 
 [[package]]
 name = "esp-bootloader-esp-idf"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02a56964ab5479ac20c9cf76fa3b0d3f2233b20b5d8554e81ef5d65f63c20567"
+checksum = "35ffc117c3a9859835d89d0e90f5ee9886ce2264a71a849a7a22ab5308f6653c"
 dependencies = [
  "cfg-if",
  "document-features",
  "embedded-storage",
- "esp-config 0.6.1",
- "esp-hal-procmacros 0.21.0",
- "esp-metadata-generated 0.3.0",
+ "esp-config 0.7.0",
+ "esp-hal-procmacros 0.22.0",
+ "esp-metadata-generated 0.4.0",
  "esp-rom-sys",
  "jiff",
  "log",
