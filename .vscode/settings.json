@@ -1,13 +1,13 @@
 {
     "chat.disableAIFeatures": true,
-    "rust-analyzer.server.path": "${workspaceFolder}/.vscode/ra-server.sh",
     "rust-analyzer.cargo.allTargets": false,
     "rust-analyzer.cargo.buildScripts.enable": true,
     "rust-analyzer.cargo.noDefaultFeatures": true,
     "rust-analyzer.cargo.buildScripts.invocationStrategy": "once",
     "rust-analyzer.cargo.target": "xtensa-esp32s3-none-elf",
     "rust-analyzer.check.overrideCommand": [
-        "${workspaceFolder}/.vscode/bin/cargo",
+        "cargo",
+        "+esp",
         "check",
         "--message-format=json"
     ],
