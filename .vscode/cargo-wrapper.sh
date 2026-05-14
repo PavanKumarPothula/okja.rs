@@ -1,10 +1,10 @@
 #!/bin/bash
-# Wrapper that strips --lockfile-path (unsupported in cargo 1.95)
-# and +toolchain syntax (not understood by cargo directly) from
-# rust-analyzer's cargo calls.
+# Wrapper that strips --lockfile-path (unsupported in cargo <=1.97)
+# and +toolchain syntax from rust-analyzer's cargo calls.
+# Portable: uses $HOME to locate the esp toolchain dynamically.
 
-# Ensure rustc and other tools are findable
-export PATH="/home/pavankup/.rustup/toolchains/esp/bin:$PATH"
+ESP_CARGO="$HOME/.rustup/toolchains/esp/bin/cargo"
+export PATH="$HOME/.rustup/toolchains/esp/bin:$PATH"
 
 args=()
 skip_next=false
@@ -20,10 +20,9 @@ for arg in "$@"; do
     if [[ "$arg" == --lockfile-path=* ]]; then
         continue
     fi
-    # Strip +toolchain args (rustup feature, not cargo)
     if [[ "$arg" == +* ]]; then
         continue
     fi
     args+=("$arg")
 done
-exec /home/pavankup/.rustup/toolchains/esp/bin/cargo "${args[@]}"
+exec "$ESP_CARGO" "${args[@]}"

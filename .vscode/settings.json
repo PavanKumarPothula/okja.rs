@@ -9,7 +9,7 @@
     },
     "rust-analyzer.cargo.target": "xtensa-esp32s3-none-elf",
     "rust-analyzer.check.overrideCommand": [
-        "/local-ssd/pavankup/ws/okja.rs/.vscode/bin/cargo",
+        "${workspaceFolder}/.vscode/bin/cargo",
         "check",
         "--message-format=json"
     ],
@@ -21,7 +21,7 @@
     "rust-analyzer.check.allTargets": false,
     "rust-analyzer.server.extraEnv": {
         "RUSTUP_TOOLCHAIN": "esp",
-        "PATH": "/local-ssd/pavankup/ws/okja.rs/.vscode/bin:/home/pavankup/.rustup/toolchains/esp/bin:/home/pavankup/.cargo/bin:/usr/local/bin:/usr/bin:/bin"
+        "PATH": "${workspaceFolder}/.vscode/bin:${env:HOME}/.rustup/toolchains/esp/bin:${env:HOME}/.cargo/bin:/usr/local/bin:/usr/bin:/bin"
     },
     "rust-analyzer.procMacro.enable": true
 }
