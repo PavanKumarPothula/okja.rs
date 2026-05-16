@@ -1,4 +1,5 @@
 pub mod codec {
+    use defmt::info;
     // use crate::audio::codec::dr_flac_bindings::{
     //     drflac_meta_proc, drflac_open_memory_with_metadata, drflac_read_proc, drflac_seek_proc,
     // };
@@ -56,6 +57,7 @@ pub mod codec {
                 Decoder::FLAC(mut current_metadata_container) => current_metadata_container
                     .decoder_obj
                     .decode(byte_stream)
+                    .inspect_err(|this_error| info!("{:#?}", defmt::Debug2Format(&this_error)))
                     .unwrap()
                     .1
                     .unwrap(),

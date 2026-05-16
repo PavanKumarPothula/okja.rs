@@ -1,12 +1,22 @@
+# [target.xtensa-esp32s3-none-elf]
+# runner = "espflash flash --monitor --chip esp32s3"
+
+# [env]
+# ESP_LOG="info"
+
 [target.xtensa-esp32s3-none-elf]
-runner = "espflash flash --monitor --chip esp32s3 --after watchdog-reset"
+runner = "probe-rs run --chip=esp32s3 --preverify --always-print-stacktrace"
 
 [env]
-ESP_LOG="info"
+DEFMT_LOG="trace"
+CC = "xtensa-esp32s3-elf-cc"
+AR = "xtensa-esp32s3-elf-ar"
+CFLAGS = "-mlongcalls"
 
 [build]
 rustflags = [
   "-C", "link-arg=-nostartfiles",
+  "-Z", "stack-protector=all",
 ]
 
 target = "xtensa-esp32s3-none-elf"
