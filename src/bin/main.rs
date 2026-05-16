@@ -42,6 +42,7 @@ use embedded_sdmmc::{
 use okja::audio::codec;
 
 use tlv320dac3100::TLV320DAC3100;
+use tlv320dac3100::registers::CODEC_INTERFACE_CONTROL_1;
 use tlv320dac3100::typedefs::VolumeControl;
 
 assign_resources! {
@@ -219,20 +220,21 @@ impl AppResources {
         info!("Audio init Start!");
         let mut rst_pin = Output::new(r.dac_rst, Level::Low, OutputConfig::default());
         rst_pin.set_low();
-        esp_delay::default().delay_micros(100);
+        esp_delay::default().delay_millis(100);
         rst_pin.set_high();
         let i2c_bus_instance = i2c::master::I2c::new(r.i2c_module, I2CConfig::default())
             .unwrap()
             .with_scl(r.i2c_scl)
             .with_sda(r.i2c_sda);
         info!("Audio I2C Bus Start!");
-        let mut dacObj = TLV320DAC3100::new(i2c_bus_instance);
-        dacObj
+        let mut dac_obj = TLV320DAC3100::new(i2c_bus_instance);
+        esp_delay::default().delay_millis(10);
+        dac_obj
             .set_dac_volume_control(false, false, VolumeControl::IndependentChannels)
             .unwrap();
         info!("Audio init End!");
         DACResources {
-            tlv_obj: dacObj,
+            tlv_obj: dac_obj,
             i2s_bclk: r.i2s_bclk,
             i2s_dma: r.i2s_dma,
             i2s_dout: r.i2s_dout,
@@ -325,11 +327,11 @@ async fn sdcard_task(volume_manager: VolumeManagerType) {
 #[embassy_executor::task]
 async fn audio_task(dac_peripherals: DACResources) {
     info!("AUDIOTASK: Audio Started");
-    static audio_filename: &str = "stereo.flac";
+    static AUDIO_FILENAME: &str = "stereo.flac";
     static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
-    let decoder = codec::codec::Decoder::new(audio_filename, FLAC_AUDIO);
-    let pcm_samples = decoder.get_pcm_samples(&FLAC_AUDIO[..1000]);
-    info!("AUDIOTASK: SamplesRate:{}", pcm_samples.sample_rate);
+    let mut decoder = codec::codec::Decoder::new(AUDIO_FILENAME, FLAC_AUDIO);
+    let mut pos = 0;
+
     let i2s_driver = I2s::new(
         dac_peripherals.i2s_module,
         dac_peripherals.i2s_dma,
@@ -343,21 +345,51 @@ async fn audio_task(dac_peripherals: DACResources) {
         .with_dout(dac_peripherals.i2s_dout)
         .with_ws(dac_peripherals.i2s_ws)
         .build(tx_descriptors);
-    i2s_tx_writer
-        .apply_config(
-            &UnitConfig::default()
-                .with_channels(Channels::new(pcm_samples.channels, 0xF, None))
-                .with_sample_rate(Rate::from_hz(pcm_samples.sample_rate)),
-        )
-        .unwrap();
-    loop {
-        info!("AUDIOTASK: Playing!");
-        i2s_tx_writer
-            .write_dma(&mut pcm_samples.samples())
-            .unwrap()
-            .wait()
-            .unwrap();
-        Timer::after(Duration::from_secs(1)).await;
+
+    match decoder {
+        codec::codec::Decoder::FLAC(ref this_meta) => {
+            pos = this_meta.metadata.metadata_size;
+            i2s_tx_writer
+                .apply_config(
+                    &UnitConfig::default()
+                        .with_channels(Channels::new(
+                            this_meta.metadata.stream_info.channels,
+                            0xF,
+                            None,
+                        ))
+                        .with_sample_rate(Rate::from_hz(
+                            this_meta.metadata.stream_info.sample_rate,
+                        )),
+                )
+                .unwrap();
+        }
+    }
+    while pos <= FLAC_AUDIO.len() {
+        info!("AUDIOTASK: Position:{}", pos);
+        let decoder_result = decoder.get_pcm_samples(&FLAC_AUDIO, pos);
+        info!("AUDIOTASK: Consumed:{}", decoder_result.memory_pos - pos);
+        info!("AUDIOTASK: isEOF:{}", decoder_result.is_eof);
+        if !decoder_result.is_eof {
+            let frame_result = decoder_result.decoded_frame;
+            pos = decoder_result.memory_pos; // for the next decode op 
+            if frame_result.is_none() {
+                info!("AUDIOTASK: NOFRAME");
+                continue;
+            }
+            let frame = frame_result.unwrap();
+            info!("AUDIOTASK: SampleNumber:{}", frame.sample_number);
+            info!("AUDIOTASK: SamplesRate:{}", frame.sample_rate);
+            info!("AUDIOTASK: Bps:{}", frame.bps);
+            info!("AUDIOTASK: Channels:{}", frame.channels);
+            i2s_tx_writer
+                .write_dma(&mut frame.samples())
+                .unwrap()
+                .wait()
+                .unwrap();
+            // Timer::after(Duration::from_secs(1)).await;
+        } else {
+            break;
+        }
     }
 }
 extern crate alloc;

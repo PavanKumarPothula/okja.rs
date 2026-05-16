@@ -1,4 +1,7 @@
 pub mod codec {
+    use core::fmt::{self, Debug};
+    use defmt::Format;
+
     use defmt::info;
     // use crate::audio::codec::dr_flac_bindings::{
     //     drflac_meta_proc, drflac_open_memory_with_metadata, drflac_read_proc, drflac_seek_proc,
@@ -7,26 +10,45 @@ pub mod codec {
 
     // use claxon::FlacReader;
     // use cty::;
-
-    struct Metadata {
-        title_name: &'static str,
-        stream_info: StreamInfo,
+    pub struct DecoderResult {
+        pub is_eof: bool,
+        pub memory_pos: usize,
+        pub decoded_frame: Option<DecodedFrame>,
+    }
+    // #[derive(defmt::Format)]
+    pub struct Metadata {
+        pub title_name: &'static str,
+        pub stream_info: StreamInfo,
+        pub metadata_size: usize,
     }
     // struct ByteStreamContainer{
     //     file_offset: usize,
     //     byte_stream_data: &'static [u8],
     // }
-    struct MediaContainer {
-        filename: &'static str,
-        metadata: Metadata,
-        decoder_obj: FlacDecoder,
+
+    pub struct MediaContainer {
+        pub filename: &'static str,
+        pub metadata: Metadata,
+        pub decoder_obj: FlacDecoder,
         // byte_stream_container : ByteStreamContainer,
     }
+
     pub enum Decoder {
         FLAC(MediaContainer),
         // MP3,
         // AAC,
     }
+    // impl defmt::Format for MediaContainer {
+    //     fn format(&self, fmt: defmt::Formatter) {
+    //         defmt::write!(
+    //             fmt,
+    //             "MediaContainer:: filename: {}:: metadata: {}",
+    //             &self.filename,
+    //             &self.metadata,
+    //         )
+    //     }
+    // }
+
     impl Decoder {
         pub fn new(filename: &'static str, p_data_const: &'static [u8]) -> Self {
             match filename.rsplit_once(".").unwrap().1 {
@@ -36,31 +58,73 @@ pub mod codec {
                     // This actually can happen only once, instead of happening for every fileopen
                     let mut decoder_obj = FlacDecoder::new();
                     decoder_obj.init();
+                    let (metadata_size, metadata) =
+                        decoder_obj.read_streaminfo(p_data_const).unwrap();
                     Self::FLAC(MediaContainer {
                         filename: filename,
                         metadata: Metadata {
                             title_name: filename,
-                            stream_info: decoder_obj
-                                .read_streaminfo(p_data_const)
-                                .unwrap()
-                                .1
-                                .unwrap(),
+                            stream_info: metadata.unwrap(),
+                            metadata_size,
                         },
-                        decoder_obj, // byte_stream_container: ByteStreamContainer { file_offset: 0, byte_stream_data: &[0_u8;] }
+                        decoder_obj,
                     })
                 }
                 _ => panic!("What!"),
             }
         }
-        pub fn get_pcm_samples(self, byte_stream: &[u8]) -> DecodedFrame {
+        pub fn get_pcm_samples(&mut self, byte_stream: &[u8], mut pos: usize) -> DecoderResult {
             match self {
-                Decoder::FLAC(mut current_metadata_container) => current_metadata_container
-                    .decoder_obj
-                    .decode(byte_stream)
-                    .inspect_err(|this_error| info!("{:#?}", defmt::Debug2Format(&this_error)))
-                    .unwrap()
-                    .1
-                    .unwrap(),
+                Decoder::FLAC(current_metadata_container) => {
+                    // let sync_result = current_metadata_container.decoder_obj.sync(byte_stream);
+                    // let (next_frame_pos, is_next_frame_available) = sync_result
+                    //     .inspect_err(|this_error| {
+                    //         info!("Error says {:#?}", defmt::Debug2Format(&this_error))
+                    //     })
+                    //     .unwrap();
+                    // if is_next_frame_available {
+                    //     pos += next_frame_pos;
+                    //     info!("ByteStreamNextBoundaryOffset: {}", next_frame_pos);
+                    // }
+                    info!("ByteStreamSize: {}", byte_stream.len());
+                    info!("ByteStreamPos: {}", pos);
+                    // let stream_info = current_metadata_container
+                    //     .decoder_obj
+                    //     .read_streaminfo(byte_stream);
+                    match current_metadata_container
+                        .decoder_obj
+                        .decode(&byte_stream[pos..])
+                        .inspect_err(|this_error| {
+                            info!("Error says {:#?}", defmt::Debug2Format(&this_error))
+                        })
+                        .unwrap()
+                    {
+                        (consumed, Some(f)) => {
+                            pos += consumed;
+                            return DecoderResult {
+                                is_eof: false,
+                                memory_pos: pos,
+                                decoded_frame: Some(f),
+                            };
+                        }
+                        (consumed, None) => {
+                            if consumed == 0 {
+                                return DecoderResult {
+                                    is_eof: true,
+                                    memory_pos: pos,
+                                    decoded_frame: None,
+                                };
+                            } else {
+                                pos += consumed;
+                                return DecoderResult {
+                                    is_eof: false,
+                                    memory_pos: pos,
+                                    decoded_frame: None,
+                                };
+                            }
+                        }
+                    }
+                }
             }
         }
     }
