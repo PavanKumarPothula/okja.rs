@@ -6,15 +6,18 @@
     holding buffers for the duration of a data transfer."
 )]
 
+use core::slice::from_raw_parts;
+
 use alloc::string::String;
 use embassy_executor::Spawner;
-use embassy_time::{Delay, Duration, Timer};
+use embassy_time::{Delay, Duration, Timer, block_for};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use embedded_sdmmc::fat::Fat32Info;
 use embedded_sdmmc::filesystem::ToShortFileName;
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
 use esp_hal::delay::Delay as esp_delay;
+use esp_hal::dma::ReadBuffer;
 use esp_hal::gpio::{Level, Output, OutputConfig, OutputPin};
 use esp_hal::i2c::master::{Config as I2CConfig, I2c};
 use esp_hal::i2s::master::{Channels, Config as I2SConfig, DataFormat, I2s, Instance, UnitConfig};
@@ -22,7 +25,9 @@ use esp_hal::peripherals::{DMA_CH0, DMA_CH1, GPIO17, GPIO18, GPIO43, GPIO44, I2S
 use esp_hal::spi::master::{Config as SPIConfig, Spi, SpiDma, SpiDmaBus};
 use esp_hal::time::Rate;
 use esp_hal::timer::timg::TimerGroup;
-use esp_hal::{Blocking, assign_resources, dma, dma_descriptors, i2c};
+use esp_hal::{
+    Blocking, assign_resources, dma, dma_circular_buffers, dma_descriptors, dma_tx_buffer, i2c,
+};
 // use esp_println::{self as _, info};
 use defmt::info;
 use defmt_rtt as _;
@@ -43,7 +48,7 @@ use okja::audio::codec;
 
 use tlv320dac3100::TLV320DAC3100;
 use tlv320dac3100::registers::CODEC_INTERFACE_CONTROL_1;
-use tlv320dac3100::typedefs::VolumeControl;
+use tlv320dac3100::typedefs::*;
 
 assign_resources! {
     Resources<'d>{
@@ -220,18 +225,109 @@ impl AppResources {
         info!("Audio init Start!");
         let mut rst_pin = Output::new(r.dac_rst, Level::Low, OutputConfig::default());
         rst_pin.set_low();
-        esp_delay::default().delay_millis(100);
+        block_for(Duration::from_millis(200));
         rst_pin.set_high();
         let i2c_bus_instance = i2c::master::I2c::new(r.i2c_module, I2CConfig::default())
             .unwrap()
             .with_scl(r.i2c_scl)
             .with_sda(r.i2c_sda);
         info!("Audio I2C Bus Start!");
+
         let mut dac_obj = TLV320DAC3100::new(i2c_bus_instance);
-        esp_delay::default().delay_millis(10);
+
+        dac_obj
+            .set_codec_interface_control_1(
+                CodecInterface::I2S,
+                CodecInterfaceWordLength::Word16Bits,
+                false,
+                false,
+            )
+            .expect("Error setting codec interface control 1");
+        dac_obj
+            .set_clock_gen_muxing(PllClkin::Bclk, CodecClkin::PllClk)
+            .expect("Error setting clock gen muxing");
+        // TODO PLL is powered later in ref example
+        dac_obj.set_pll_p_and_r_values(true, 2, 2).expect("");
+        dac_obj.set_pll_j_value(32).expect("Error setting pll j");
+        dac_obj.set_pll_d_value(0).expect("Error setting pll d");
+        dac_obj
+            .set_dac_ndac_val(true, 8)
+            .expect("Error setting dac NDAC val");
+        dac_obj
+            .set_dac_mdac_val(true, 2)
+            .expect("Error setting dac MDAC val");
+        dac_obj
+            .set_dac_data_path_setup(
+                true,
+                true,
+                LeftDataPath::Left,
+                RightDataPath::Right,
+                SoftStepping::OneStepPerPeriod,
+            )
+            .expect("Error setting dac DataPath setup");
+
+        dac_obj
+            .set_dac_l_and_dac_r_output_mixer_routing(
+                DacLeftOutputMixerRouting::LeftChannelMixerAmplifier,
+                false,
+                false,
+                DacRightOutputMixerRouting::RightChannelMixerAmplifier,
+                false,
+                false,
+            )
+            .expect("Error setting dac L and R mixer routing");
         dac_obj
             .set_dac_volume_control(false, false, VolumeControl::IndependentChannels)
-            .unwrap();
+            .expect("Error setting dac Volume control");
+
+        dac_obj
+            .set_dac_left_volume_control(10.0)
+            .expect("Error setting dac Left volume control");
+        dac_obj
+            .set_dac_right_volume_control(10.0)
+            .expect("Error setting dac Right volume control");
+        dac_obj
+            .set_headphone_drivers(true, true, HpOutputVoltage::Common1_35V, false)
+            .expect("Error setting dac Headphone drivers");
+
+        dac_obj
+            .set_hpl_driver(0, false)
+            .expect("Error setting dac hpl driver");
+        dac_obj
+            .set_hpr_driver(0, false)
+            .expect("Error setting dac hpr driver");
+        dac_obj
+            .set_left_analog_volume_to_hpl(true, 0)
+            .expect("Error setting left analog volume to hpl");
+        dac_obj
+            .set_right_analog_volume_to_hpr(true, 0)
+            .expect("Error setting right analog volume to hpr");
+        dac_obj
+            .set_class_d_spk_amp(false)
+            .expect("Error setting class D spk amp");
+        // dac_obj
+        //     .set_class_d_spk_driver(OutputStage::Gain6dB, true)
+        //     .expect("Error setting class D spk driver");
+        // // dac_obj
+        //     .set_left_analog_volume_to_spk(true, 0)
+        //     .expect("Error setting left analog volume to spk");
+        // // // dac_obj
+        // // //     .set_micbias(false, true, MicBiasOutput::PoweredAVDD)
+        // //     .expect("Error setting micbias");
+        // dac_obj
+        //     .set_headset_detection(
+        //         true,
+        //         HeadsetDetectionDebounce::Debounce16ms,
+        //         HeadsetButtonPressDebounce::Debounce0ms,
+        //     )
+        //     .expect("Error setting headset detection");
+        // dac_obj
+        //     .set_int1_control_register(true, true, false, false, false, false)
+        //     .expect("Error setting int1 control register");
+        dac_obj
+            .set_gpio1_io_pin_control(Gpio1Mode::Int1)
+            .expect("Error setting gpio1 io pin");
+        block_for(Duration::from_millis(1000));
         info!("Audio init End!");
         DACResources {
             tlv_obj: dac_obj,
@@ -329,64 +425,98 @@ async fn audio_task(dac_peripherals: DACResources) {
     info!("AUDIOTASK: Audio Started");
     static AUDIO_FILENAME: &str = "stereo.flac";
     static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
+    const SINE_WAVE: [i16; 96] = [
+        0, 0, 4277, 4277, 8481, 8481, 12539, 12539, 16383, 16383, 19947, 19947, 23170, 23170,
+        25996, 25996, 28377, 28377, 30273, 30273, 31650, 31650, 32487, 32487, 32767, 32767, 32487,
+        32487, 31650, 30273, 30273, 28377, 28377, 25996, 25996, 23170, 23170, 19947, 19947, 16383,
+        16383, 12539, 12539, 8481, 8481, 4277, 4277, 0, 0, -4277, -4277, -8481, -8481, -12539,
+        -16383, -16383, -19947, -19947, -23170, -23170, -25996, -25996, -28377, -28377, -30273,
+        -30273, -31650, -31650, -32487, -32487, -32767, -32767, -32487, -32487, -31650, -30273,
+        -30273, -28377, -28377, -25996, -25996, -23170, -23170, -19947, -19947, -16383, -16383,
+        -12539, -12539, -8481, -8481, -4277, -4277, -4277, -4277, -4277,
+    ];
+
     let mut decoder = codec::codec::Decoder::new(AUDIO_FILENAME, FLAC_AUDIO);
+
     let mut pos = 0;
 
     let i2s_driver = I2s::new(
         dac_peripherals.i2s_module,
         dac_peripherals.i2s_dma,
-        I2SConfig::default(),
+        I2SConfig::new_tdm_philips()
+            .with_bit_order(esp_hal::i2s::master::BitOrder::MsbFirst)
+            .with_sample_rate(Rate::from_khz(48)),
     )
     .unwrap();
-    let (rx_descriptors, tx_descriptors) = dma_descriptors!(32000, 32000);
+    let (_, _, dma_tx_buf, dma_tx_desc) = dma_circular_buffers!(0, 147456);
     let mut i2s_tx_writer = i2s_driver
         .i2s_tx
         .with_bclk(dac_peripherals.i2s_bclk)
         .with_dout(dac_peripherals.i2s_dout)
         .with_ws(dac_peripherals.i2s_ws)
-        .build(tx_descriptors);
-
+        .build(dma_tx_desc);
+    let mut index = 0;
+    for pair in dma_tx_buf.chunks_mut(2) {
+        [pair[0], pair[1]] = SINE_WAVE[index % 96].to_ne_bytes();
+        index += 1;
+    }
     match decoder {
         codec::codec::Decoder::FLAC(ref this_meta) => {
             pos = this_meta.metadata.metadata_size;
             i2s_tx_writer
                 .apply_config(
-                    &UnitConfig::default()
-                        .with_channels(Channels::new(
-                            this_meta.metadata.stream_info.channels,
-                            0xF,
-                            None,
-                        ))
+                    &UnitConfig::new_tdm_philips()
+                        .with_channels(Channels::STEREO)
+                        .with_data_format(DataFormat::Data16Channel16)
                         .with_sample_rate(Rate::from_hz(
                             this_meta.metadata.stream_info.sample_rate,
-                        )),
+                        )), // .with_data_format()
                 )
                 .unwrap();
         }
     }
+
+    let mut transfer = i2s_tx_writer.write_dma_circular(dma_tx_buf).unwrap();
+
     while pos <= FLAC_AUDIO.len() {
-        info!("AUDIOTASK: Position:{}", pos);
+        // info!("AUDIOTASK: Position:{}", pos);
         let decoder_result = decoder.get_pcm_samples(&FLAC_AUDIO, pos);
-        info!("AUDIOTASK: Consumed:{}", decoder_result.memory_pos - pos);
-        info!("AUDIOTASK: isEOF:{}", decoder_result.is_eof);
+        // info!("AUDIOTASK: Consumed:{}", decoder_result.memory_pos - pos);
+        // info!("AUDIOTASK: isEOF:{}", decoder_result.is_eof);
         if !decoder_result.is_eof {
             let frame_result = decoder_result.decoded_frame;
-            pos = decoder_result.memory_pos; // for the next decode op 
+            pos = decoder_result.memory_pos; // for the next decode op
             if frame_result.is_none() {
-                info!("AUDIOTASK: NOFRAME");
+                // info!("AUDIOTASK: NOFRAME");
                 continue;
             }
             let frame = frame_result.unwrap();
-            info!("AUDIOTASK: SampleNumber:{}", frame.sample_number);
-            info!("AUDIOTASK: SamplesRate:{}", frame.sample_rate);
-            info!("AUDIOTASK: Bps:{}", frame.bps);
-            info!("AUDIOTASK: Channels:{}", frame.channels);
-            i2s_tx_writer
-                .write_dma(&mut frame.samples())
-                .unwrap()
-                .wait()
-                .unwrap();
-            // Timer::after(Duration::from_secs(1)).await;
+            // info!("AUDIOTASK: SampleNumber:{}", frame.sample_number);
+            // info!("AUDIOTASK: SamplesRate:{}", frame.sample_rate);
+            // info!("AUDIOTASK: Bps:{}", frame.bps);
+            // info!("AUDIOTASK: Channels:{}", frame.channels);
+            // i2s_tx_writer.apply_config(&UnitConfig::default().with_ws_width(ws_width))
+            let samples_to_write = frame.samples();
+            let frame_size_bytes = samples_to_write.len().checked_mul(2).unwrap();
+            loop {
+                let dma_available_bytes = transfer
+                    .available()
+                    .inspect_err(|e: &dma::DmaError| info!("DMAError: {}", e))
+                    .unwrap();
+                info!("AUDIOTASK: Available Bytes: {}", dma_available_bytes);
+                if dma_available_bytes < frame_size_bytes {
+                    Timer::after(Duration::from_nanos(10)).await;
+                } else {
+                    transfer
+                        .push(unsafe {
+                            from_raw_parts(samples_to_write.as_ptr().cast(), frame_size_bytes)
+                        })
+                        .inspect_err(|e| info!("DMAError: {}", e))
+                        .unwrap();
+                    break;
+                }
+            }
+            // transfer.push_with(|_|frame.samples().len()).unwrap();
         } else {
             break;
         }
@@ -410,8 +540,9 @@ async fn main(spawner: Spawner) {
 
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
-    let r = split_resources!(peripherals);
+    // esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram); // Set as heap
 
+    let r = split_resources!(peripherals);
     esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 73744);
 
     let timg0 = TimerGroup::new(peripherals.TIMG0);
