@@ -5,7 +5,7 @@
 # ESP_LOG="info"
 
 [target.xtensa-esp32s3-none-elf]
-runner = "probe-rs run --chip=esp32s3 --preverify"
+runner = "probe-rs run --chip=esp32s3 --preverify  --speed 40000"
 
 [env]
 DEFMT_LOG="trace"

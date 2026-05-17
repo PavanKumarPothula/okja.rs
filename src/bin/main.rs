@@ -256,13 +256,15 @@ impl AppResources {
         dac_obj
             .set_dac_mdac_val(true, 2)
             .expect("Error setting dac MDAC val");
+
+        
         dac_obj
             .set_dac_data_path_setup(
                 true,
                 true,
                 LeftDataPath::Left,
                 RightDataPath::Right,
-                SoftStepping::OneStepPerPeriod,
+                SoftStepping::OneStepPerTwoPeriods,
             )
             .expect("Error setting dac DataPath setup");
 
@@ -281,17 +283,17 @@ impl AppResources {
             .expect("Error setting dac Volume control");
 
         dac_obj
-            .set_dac_left_volume_control(10.0)
+            .set_dac_left_volume_control(8.0)
             .expect("Error setting dac Left volume control");
         dac_obj
-            .set_dac_right_volume_control(10.0)
+            .set_dac_right_volume_control(8.0)
             .expect("Error setting dac Right volume control");
         dac_obj
             .set_headphone_drivers(true, true, HpOutputVoltage::Common1_35V, false)
             .expect("Error setting dac Headphone drivers");
 
         dac_obj
-            .set_hpl_driver(0, false)
+            .set_hpl_driver(0, true)
             .expect("Error setting dac hpl driver");
         dac_obj
             .set_hpr_driver(0, false)
@@ -303,14 +305,15 @@ impl AppResources {
             .set_right_analog_volume_to_hpr(true, 0)
             .expect("Error setting right analog volume to hpr");
         dac_obj
-            .set_class_d_spk_amp(false)
+            .set_class_d_spk_amp(true)
             .expect("Error setting class D spk amp");
-        // dac_obj
-        //     .set_class_d_spk_driver(OutputStage::Gain6dB, true)
-        //     .expect("Error setting class D spk driver");
-        // // dac_obj
-        //     .set_left_analog_volume_to_spk(true, 0)
-        //     .expect("Error setting left analog volume to spk");
+          dac_obj
+            .set_left_analog_volume_to_spk(true, 0)
+            .expect("Error setting left analog volume to spk");
+        dac_obj
+            .set_class_d_spk_driver(OutputStage::Gain6dB, false)
+            .expect("Error setting class D spk driver");
+      
         // // // dac_obj
         // // //     .set_micbias(false, true, MicBiasOutput::PoweredAVDD)
         // //     .expect("Error setting micbias");
@@ -321,9 +324,9 @@ impl AppResources {
         //         HeadsetButtonPressDebounce::Debounce0ms,
         //     )
         //     .expect("Error setting headset detection");
-        // dac_obj
-        //     .set_int1_control_register(true, true, false, false, false, false)
-        //     .expect("Error setting int1 control register");
+        dac_obj
+            .set_int1_control_register(true, true, false, false, false, false)
+            .expect("Error setting int1 control register");
         dac_obj
             .set_gpio1_io_pin_control(Gpio1Mode::Int1)
             .expect("Error setting gpio1 io pin");
@@ -423,8 +426,8 @@ async fn sdcard_task(volume_manager: VolumeManagerType) {
 #[embassy_executor::task]
 async fn audio_task(dac_peripherals: DACResources) {
     info!("AUDIOTASK: Audio Started");
-    static AUDIO_FILENAME: &str = "stereo.flac";
-    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
+    static AUDIO_FILENAME: &str = "xz2.flac";
+    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/xz2.flac");
     const SINE_WAVE: [i16; 96] = [
         0, 0, 4277, 4277, 8481, 8481, 12539, 12539, 16383, 16383, 19947, 19947, 23170, 23170,
         25996, 25996, 28377, 28377, 30273, 30273, 31650, 31650, 32487, 32487, 32767, 32767, 32487,
@@ -457,8 +460,9 @@ async fn audio_task(dac_peripherals: DACResources) {
         .build(dma_tx_desc);
     let mut index = 0;
     for pair in dma_tx_buf.chunks_mut(2) {
-        [pair[0], pair[1]] = SINE_WAVE[index % 96].to_ne_bytes();
-        index += 1;
+        [pair[0], pair[1]] = [0,0];
+        // [pair[0], pair[1]] = SINE_WAVE[index % 96].to_ne_bytes();
+        // index += 1;
     }
     match decoder {
         codec::codec::Decoder::FLAC(ref this_meta) => {
