@@ -1,6 +1,6 @@
 pub mod codec {
-    use core::fmt::{self, Debug};
-    use defmt::Format;
+    
+    
 
     use defmt::info;
     // use crate::audio::codec::dr_flac_bindings::{
