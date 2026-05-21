@@ -3,30 +3,29 @@ pub mod player;
 
 use core::slice::from_raw_parts;
 
+use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer, block_for};
 use esp_backtrace as _;
 use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::i2c::master::Config as I2CConfig;
-use esp_hal::i2s::master::{Channels, Config as I2SConfig, DataFormat, I2s, UnitConfig};
+use esp_hal::i2s::master::{Channels, Config as I2SConfig, DataFormat, I2s, I2sTx, UnitConfig};
 use esp_hal::time::Rate;
-use esp_hal::{
-    dma, dma_circular_buffers, i2c,
-};
+use esp_hal::{Blocking, dma, dma_circular_buffers, i2c};
 // use esp_println::{self as _, info};
 use defmt::info;
 use defmt_rtt as _;
 
-
 // use mousefood::ratatui::Terminal;
 // use mousefood::*;
 
-
+use miniflac_sys::FlacDecoder;
 use tlv320dac3100::TLV320DAC3100;
 use tlv320dac3100::typedefs::*;
 
+use crate::audio::codec::codec::Decoder;
 use crate::{DACPeripherals, DACResources};
 
-pub fn audio_init(r: DACPeripherals<'static>) -> DACResources {
+pub fn init(r: DACPeripherals<'static>) -> DACResources {
     info!("Audio init Start!");
     let mut rst_pin = Output::new(r.dac_rst, Level::Low, OutputConfig::default());
     rst_pin.set_low();
@@ -147,49 +146,11 @@ pub fn audio_init(r: DACPeripherals<'static>) -> DACResources {
 }
 
 #[embassy_executor::task]
-pub async fn audio_task(dac_peripherals: DACResources) {
-    info!("AUDIOTASK: Audio Started");
-    static AUDIO_FILENAME: &str = "stereo.flac";
-    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
-    const SINE_WAVE: [i16; 96] = [
-        0, 0, 4277, 4277, 8481, 8481, 12539, 12539, 16383, 16383, 19947, 19947, 23170, 23170,
-        25996, 25996, 28377, 28377, 30273, 30273, 31650, 31650, 32487, 32487, 32767, 32767, 32487,
-        32487, 31650, 30273, 30273, 28377, 28377, 25996, 25996, 23170, 23170, 19947, 19947, 16383,
-        16383, 12539, 12539, 8481, 8481, 4277, 4277, 0, 0, -4277, -4277, -8481, -8481, -12539,
-        -16383, -16383, -19947, -19947, -23170, -23170, -25996, -25996, -28377, -28377, -30273,
-        -30273, -31650, -31650, -32487, -32487, -32767, -32767, -32487, -32487, -31650, -30273,
-        -30273, -28377, -28377, -25996, -25996, -23170, -23170, -19947, -19947, -16383, -16383,
-        -12539, -12539, -8481, -8481, -4277, -4277, -4277, -4277, -4277,
-    ];
-
-    let mut decoder = codec::codec::Decoder::new(AUDIO_FILENAME, FLAC_AUDIO);
-
-    let mut pos = 0;
-
-    let i2s_driver = I2s::new(
-        dac_peripherals.i2s_module,
-        dac_peripherals.i2s_dma,
-        I2SConfig::new_tdm_philips()
-            .with_bit_order(esp_hal::i2s::master::BitOrder::MsbFirst)
-            .with_sample_rate(Rate::from_khz(48)),
-    )
-    .unwrap();
-    let (_, _, dma_tx_buf, dma_tx_desc) = dma_circular_buffers!(0, 147456);
-    let mut i2s_tx_writer = i2s_driver
-        .i2s_tx
-        .with_bclk(dac_peripherals.i2s_bclk)
-        .with_dout(dac_peripherals.i2s_dout)
-        .with_ws(dac_peripherals.i2s_ws)
-        .build(dma_tx_desc);
-    let _index = 0;
-    for pair in dma_tx_buf.chunks_mut(2) {
-        [pair[0], pair[1]] = [0, 0];
-        // [pair[0], pair[1]] = SINE_WAVE[index % 96].to_ne_bytes();
-        // index += 1;
-    }
+pub async fn play_pause(decoder: Decoder, i2s_tx_writer: I2sTx<'static, Blocking>) {
+    let pos = 0;
     match decoder {
         codec::codec::Decoder::FLAC(ref this_meta) => {
-            pos = this_meta.metadata.metadata_size;
+            let pos = this_meta.metadata.metadata_size;
             i2s_tx_writer
                 .apply_config(
                     &UnitConfig::new_tdm_philips()
@@ -202,7 +163,6 @@ pub async fn audio_task(dac_peripherals: DACResources) {
                 .unwrap();
         }
     }
-
     let mut transfer = i2s_tx_writer.write_dma_circular(dma_tx_buf).unwrap();
 
     while pos <= FLAC_AUDIO.len() {
@@ -248,4 +208,46 @@ pub async fn audio_task(dac_peripherals: DACResources) {
             break;
         }
     }
+}
+#[embassy_executor::task]
+pub async fn main_task(spawner: Spawner, dac_peripherals: DACResources) {
+    info!("AUDIOTASK: Audio Started");
+    const SINE_WAVE: [i16; 96] = [
+        0, 0, 4277, 4277, 8481, 8481, 12539, 12539, 16383, 16383, 19947, 19947, 23170, 23170,
+        25996, 25996, 28377, 28377, 30273, 30273, 31650, 31650, 32487, 32487, 32767, 32767, 32487,
+        32487, 31650, 30273, 30273, 28377, 28377, 25996, 25996, 23170, 23170, 19947, 19947, 16383,
+        16383, 12539, 12539, 8481, 8481, 4277, 4277, 0, 0, -4277, -4277, -8481, -8481, -12539,
+        -16383, -16383, -19947, -19947, -23170, -23170, -25996, -25996, -28377, -28377, -30273,
+        -30273, -31650, -31650, -32487, -32487, -32767, -32767, -32487, -32487, -31650, -30273,
+        -30273, -28377, -28377, -25996, -25996, -23170, -23170, -19947, -19947, -16383, -16383,
+        -12539, -12539, -8481, -8481, -4277, -4277, -4277, -4277, -4277,
+    ];
+    let mut pos = 0;
+
+    let i2s_driver = I2s::new(
+        dac_peripherals.i2s_module,
+        dac_peripherals.i2s_dma,
+        I2SConfig::new_tdm_philips()
+            .with_bit_order(esp_hal::i2s::master::BitOrder::MsbFirst)
+            .with_sample_rate(Rate::from_khz(48)),
+    )
+    .unwrap();
+    let (_, _, dma_tx_buf, dma_tx_desc) = dma_circular_buffers!(0, 147456);
+    let mut i2s_tx_writer = i2s_driver
+        .i2s_tx
+        .with_bclk(dac_peripherals.i2s_bclk)
+        .with_dout(dac_peripherals.i2s_dout)
+        .with_ws(dac_peripherals.i2s_ws)
+        .build(dma_tx_desc);
+    let _index = 0;
+    for pair in dma_tx_buf.chunks_mut(2) {
+        [pair[0], pair[1]] = [0, 0];
+        // [pair[0], pair[1]] = SINE_WAVE[index % 96].to_ne_bytes();
+        // index += 1;
+    }
+
+    static AUDIO_FILENAME: &str = "stereo.flac";
+    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
+    let mut decoder = codec::codec::Decoder::new(AUDIO_FILENAME, FLAC_AUDIO);
+    play_pause(decoder, i2s_tx_writer);
 }

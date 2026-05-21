@@ -200,6 +200,6 @@ impl AppResources {
             .unwrap()
     }
     fn audio_init(r: DACPeripherals<'static>) -> DACResources {
-        audio::audio_init(r)
+        audio::init(r)
     }
 }

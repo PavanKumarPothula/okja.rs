@@ -148,5 +148,5 @@ async fn main(spawner: Spawner) {
     // spawner
     //     .spawn(sdcard_task(app_resource.volume_manager))
     //     .unwrap();
-    spawner.spawn(okja::audio::audio_task(app_resource.dac_peripherals).unwrap());
+    spawner.spawn(okja::audio::main_task(spawner,app_resource.dac_peripherals).unwrap());
 }
