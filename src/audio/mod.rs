@@ -1,4 +1,4 @@
-pub mod codec;
+pub(crate) mod codec;
 pub mod player;
 
 use core::slice::from_raw_parts;
@@ -24,6 +24,7 @@ use tlv320dac3100::typedefs::*;
 
 use crate::audio::codec::codec::Decoder;
 use crate::{DACPeripherals, DACResources};
+use embassy_sync::channel::Channel;
 
 pub fn init(r: DACPeripherals<'static>) -> DACResources {
     info!("Audio init Start!");
@@ -145,13 +146,28 @@ pub fn init(r: DACPeripherals<'static>) -> DACResources {
     }
 }
 
+struct I2SResources {
+    i2s_tx_writer: I2sTx<'static, Blocking>,
+    dma_tx_buf: &'static [u8; 147456],
+}
+
 #[embassy_executor::task]
-pub async fn play_pause(decoder: Decoder, i2s_tx_writer: I2sTx<'static, Blocking>) {
-    let pos = 0;
+pub async fn parse_metadata(file_name:&'static str,file_bytes : &'static [u8]){
+    let mut decoder = Decoder::new(file_name,file_bytes);
+    decoder
+}
+#[embassy_executor::task]
+pub async fn play_pause(mut i2s_resources: I2SResources) {
+    let mut pos = 0;
+
+    static AUDIO_FILENAME: &str = "stereo.flac";
+    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
+    let mut decoder = codec::codec::Decoder::new(AUDIO_FILENAME, FLAC_AUDIO);
     match decoder {
         codec::codec::Decoder::FLAC(ref this_meta) => {
             let pos = this_meta.metadata.metadata_size;
-            i2s_tx_writer
+            i2s_resources
+                .i2s_tx_writer
                 .apply_config(
                     &UnitConfig::new_tdm_philips()
                         .with_channels(Channels::STEREO)
@@ -163,7 +179,10 @@ pub async fn play_pause(decoder: Decoder, i2s_tx_writer: I2sTx<'static, Blocking
                 .unwrap();
         }
     }
-    let mut transfer = i2s_tx_writer.write_dma_circular(dma_tx_buf).unwrap();
+    let mut transfer = i2s_resources
+        .i2s_tx_writer
+        .write_dma_circular(i2s_resources.dma_tx_buf)
+        .unwrap();
 
     while pos <= FLAC_AUDIO.len() {
         // info!("AUDIOTASK: Position:{}", pos);
@@ -245,9 +264,8 @@ pub async fn main_task(spawner: Spawner, dac_peripherals: DACResources) {
         // [pair[0], pair[1]] = SINE_WAVE[index % 96].to_ne_bytes();
         // index += 1;
     }
-
-    static AUDIO_FILENAME: &str = "stereo.flac";
-    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
-    let mut decoder = codec::codec::Decoder::new(AUDIO_FILENAME, FLAC_AUDIO);
-    play_pause(decoder, i2s_tx_writer);
+    play_pause(I2SResources {
+        i2s_tx_writer,
+        dma_tx_buf,
+    });
 }

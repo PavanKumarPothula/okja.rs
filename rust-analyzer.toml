@@ -1,0 +1,23 @@
+linkedProjects = ["./Cargo.toml"]
+checkOnSave    = true
+
+[cargo]
+target            = "xtensa-esp32s3-none-elf"
+allTargets        = false
+noDefaultFeatures = true
+
+[cargo.extraEnv]
+CARGO = "/home/pavankup/.rustup/toolchains/esp/bin/cargo"
+
+[cargo.buildScripts]
+enable             = true
+invocationStrategy = "once"
+
+
+[check]
+overrideCommand = ["cargo", "+esp", "check", "--message-format=json"]
+targets         = ["xtensa-esp32s3-none-elf"]
+allTargets      = false
+
+[procMacro]
+enable = true

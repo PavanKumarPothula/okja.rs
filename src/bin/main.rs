@@ -6,7 +6,6 @@
     holding buffers for the duration of a data transfer."
 )]
 
-
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
@@ -18,13 +17,10 @@ use defmt::info;
 use defmt_rtt as _;
 use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 
-
 // use mousefood::ratatui::Terminal;
 // use mousefood::*;
 
-use embedded_sdmmc::{
-    LfnBuffer, Mode as FileMode, VolumeIdx,
-};
+use embedded_sdmmc::{LfnBuffer, Mode as FileMode, VolumeIdx};
 
 use okja::*;
 
@@ -148,5 +144,5 @@ async fn main(spawner: Spawner) {
     // spawner
     //     .spawn(sdcard_task(app_resource.volume_manager))
     //     .unwrap();
-    spawner.spawn(okja::audio::main_task(spawner,app_resource.dac_peripherals).unwrap());
+    spawner.spawn(okja::audio::main_task(spawner, app_resource.dac_peripherals).unwrap());
 }

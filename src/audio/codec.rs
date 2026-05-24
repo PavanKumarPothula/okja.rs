@@ -3,6 +3,7 @@ pub mod codec {
     
 
     use defmt::info;
+use field::field;
     // use crate::audio::codec::dr_flac_bindings::{
     //     drflac_meta_proc, drflac_open_memory_with_metadata, drflac_read_proc, drflac_seek_proc,
     // };
@@ -60,6 +61,16 @@ pub mod codec {
                     decoder_obj.init();
                     let (metadata_size, metadata) =
                         decoder_obj.read_streaminfo(p_data_const).unwrap();
+                    let (vorbois_comments_size,vorbis_comments ) = decoder_obj.read_vorbis_comments::<128, 256, 16>(&p_data_const[metadata_size..]).unwrap();
+                    let vorbis_comments = vorbis_comments.unwrap();
+
+                    let (title_name, album_name, album_artist);
+                    &vorbis_comments.comments.iter().map(|line|
+                        let key_value = core::str::from_utf8(line).unwrap();
+                        match key_value.trim_start_matches(
+                            "TITLE" => title_name
+                        )
+                    );
                     Self::FLAC(MediaContainer {
                         filename: filename,
                         metadata: Metadata {

@@ -1066,6 +1066,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "field"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccccd906aacf6f92d665a5a3c4757d02781a8aedc8db733a1b370a838f477f15"
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1467,6 +1473,7 @@ dependencies = [
  "defmt-rtt",
  "display-interface-parallel-gpio",
  "embassy-executor",
+ "embassy-sync 0.8.0",
  "embassy-time",
  "embedded-graphics",
  "embedded-hal-bus",
@@ -1476,6 +1483,7 @@ dependencies = [
  "esp-bootloader-esp-idf",
  "esp-hal",
  "esp-rtos",
+ "field",
  "miniflac-sys",
  "mipidsi",
  "panic-rtt-target",
