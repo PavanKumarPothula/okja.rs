@@ -1,9 +1,13 @@
 pub(crate) mod codec;
 pub mod player;
 
+use core::iter::repeat_n;
 use core::slice::from_raw_parts;
 
 use embassy_executor::Spawner;
+use embassy_sync::blocking_mutex::NoopMutex;
+use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex};
+use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer, block_for};
 use esp_backtrace as _;
 use esp_hal::gpio::{Level, Output, OutputConfig};
@@ -18,13 +22,23 @@ use defmt_rtt as _;
 // use mousefood::ratatui::Terminal;
 // use mousefood::*;
 
-use miniflac_sys::FlacDecoder;
+use heapless::Vec;
 use tlv320dac3100::TLV320DAC3100;
 use tlv320dac3100::typedefs::*;
 
 use crate::audio::codec::codec::Decoder;
 use crate::{DACPeripherals, DACResources};
-use embassy_sync::channel::Channel;
+
+pub struct FileInfo {
+    pub file_name: &'static str,
+    pub file_bytes: &'static [u8],
+}
+pub enum PlayPauseState {
+    Play,
+    Pause,
+}
+pub static PLAY_PAUSE_STATE: Signal<CriticalSectionRawMutex, PlayPauseState> = Signal::new();
+pub static AUDIO_DECODER: Signal<CriticalSectionRawMutex, (&mut FileInfo, &mut Decoder)> = Signal::new();
 
 pub fn init(r: DACPeripherals<'static>) -> DACResources {
     info!("Audio init Start!");
@@ -151,59 +165,110 @@ struct I2SResources {
     dma_tx_buf: &'static [u8; 147456],
 }
 
-#[embassy_executor::task]
-pub async fn parse_metadata(file_name:&'static str,file_bytes : &'static [u8]){
-    let mut decoder = Decoder::new(file_name,file_bytes);
-    decoder
+pub async fn parse_metadata(file_info:& FileInfo) -> Decoder {
+    let FileInfo {
+        file_name,
+        file_bytes,
+    } = file_info;
+    Decoder::new(file_name, file_bytes)
+    // static AUDIO_FILENAME: &str = "stereo.flac";
+    // static file_bytes: &[u8] = include_bytes!("../../assets/stereo.flac");
 }
+
 #[embassy_executor::task]
-pub async fn play_pause(mut i2s_resources: I2SResources) {
+pub async fn player_task(dac_peripherals: DACResources) {
+    info!("AUDIOTASK: Audio Started");
+
+    let i2s_driver = I2s::new(
+        dac_peripherals.i2s_module,
+        dac_peripherals.i2s_dma,
+        I2SConfig::new_tdm_philips()
+            .with_bit_order(esp_hal::i2s::master::BitOrder::MsbFirst)
+            .with_sample_rate(Rate::from_khz(48)),
+    )
+    .unwrap();
+    let (_, _, dma_tx_buf, dma_tx_desc) = dma_circular_buffers!(0, 147456);
+    let mut i2s_tx_writer = i2s_driver
+        .i2s_tx
+        .with_bclk(dac_peripherals.i2s_bclk)
+        .with_dout(dac_peripherals.i2s_dout)
+        .with_ws(dac_peripherals.i2s_ws)
+        .build(dma_tx_desc);
+    let _index = 0;
+    dma_tx_buf.fill(0);
+    let mut i2s_resources = I2SResources {
+        i2s_tx_writer,
+        dma_tx_buf,
+    };
     let mut pos = 0;
-
-    static AUDIO_FILENAME: &str = "stereo.flac";
-    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
-    let mut decoder = codec::codec::Decoder::new(AUDIO_FILENAME, FLAC_AUDIO);
-    match decoder {
-        codec::codec::Decoder::FLAC(ref this_meta) => {
-            let pos = this_meta.metadata.metadata_size;
-            i2s_resources
-                .i2s_tx_writer
-                .apply_config(
-                    &UnitConfig::new_tdm_philips()
-                        .with_channels(Channels::STEREO)
-                        .with_data_format(DataFormat::Data16Channel16)
-                        .with_sample_rate(Rate::from_hz(
-                            this_meta.metadata.stream_info.sample_rate,
-                        )), // .with_data_format()
-                )
-                .unwrap();
-        }
-    }
-    let mut transfer = i2s_resources
-        .i2s_tx_writer
-        .write_dma_circular(i2s_resources.dma_tx_buf)
-        .unwrap();
-
-    while pos <= FLAC_AUDIO.len() {
-        // info!("AUDIOTASK: Position:{}", pos);
-        let decoder_result = decoder.get_pcm_samples(&FLAC_AUDIO, pos);
-        // info!("AUDIOTASK: Consumed:{}", decoder_result.memory_pos - pos);
-        // info!("AUDIOTASK: isEOF:{}", decoder_result.is_eof);
-        if !decoder_result.is_eof {
-            let frame_result = decoder_result.decoded_frame;
-            pos = decoder_result.memory_pos; // for the next decode op
-            if frame_result.is_none() {
-                // info!("AUDIOTASK: NOFRAME");
-                continue;
+    loop {
+        let (
+            FileInfo {
+                file_name,
+                file_bytes,
+            },
+            mut decoder,
+        ) = AUDIO_DECODER.wait().await;
+        match *decoder {
+            codec::codec::Decoder::FLAC(ref this_meta) => {
+                pos = this_meta.metadata.vorbois_comments_size;
+                i2s_resources
+                    .i2s_tx_writer
+                    .apply_config(
+                        &UnitConfig::new_tdm_philips()
+                            .with_channels(Channels::STEREO)
+                            .with_data_format(DataFormat::Data16Channel16)
+                            .with_sample_rate(Rate::from_hz(
+                                this_meta.metadata.stream_info.sample_rate,
+                            )), // .with_data_format()
+                    )
+                    .unwrap();
             }
-            let frame = frame_result.unwrap();
-            // info!("AUDIOTASK: SampleNumber:{}", frame.sample_number);
-            // info!("AUDIOTASK: SamplesRate:{}", frame.sample_rate);
-            // info!("AUDIOTASK: Bps:{}", frame.bps);
-            // info!("AUDIOTASK: Channels:{}", frame.channels);
-            // i2s_tx_writer.apply_config(&UnitConfig::default().with_ws_width(ws_width))
-            let samples_to_write = frame.samples();
-            let frame_size_bytes = samples_to_write.len().checked_mul(2).unwrap();
+        }
+        let mut transfer = i2s_resources
+            .i2s_tx_writer
+            .write_dma_circular(i2s_resources.dma_tx_buf)
+            .unwrap();
+
+        let mut samples_to_write: Vec<i16, 4000> = Vec::new();
+        let mut frame_size_bytes: usize = 0;
+        samples_to_write.fill(0_i16);
+        let mut current_play_pause_state = PlayPauseState::Pause;
+        while pos <= file_bytes.len() && !AUDIO_DECODER.signaled() {
+            // info!("AUDIOTASK: Position:{}", pos);
+            // info!("AUDIOTASK: Consumed:{}", decoder_result.memory_pos - pos);
+            // info!("AUDIOTASK: isEOF:{}", decoder_result.is_eof);
+            if PLAY_PAUSE_STATE.signaled() {
+                current_play_pause_state = PLAY_PAUSE_STATE.wait().await;
+            }
+            match current_play_pause_state{
+                PlayPauseState::Play => {
+                    let decoder_result = decoder.get_pcm_samples(&file_bytes, pos);
+                    if !decoder_result.is_eof {
+                        let frame_result = decoder_result.decoded_frame;
+                        pos = decoder_result.memory_pos; // for the next decode op
+                        if frame_result.is_none() {
+                            // info!("AUDIOTASK: NOFRAME");
+                            continue;
+                        }
+                        let frame = frame_result.unwrap();
+                        // info!("AUDIOTASK: SampleNumber:{}", frame.sample_number);
+                        // info!("AUDIOTASK: SamplesRate:{}", frame.sample_rate);
+                        // info!("AUDIOTASK: Bps:{}", frame.bps);
+                        // info!("AUDIOTASK: Channels:{}", frame.channels);
+                        // i2s_tx_writer.apply_config(&UnitConfig::default().with_ws_width(ws_width))
+                        samples_to_write.extend_from_slice(frame.samples()).unwrap();
+                        frame_size_bytes = samples_to_write.len().checked_mul(2).unwrap();
+                        // transfer.push_with(|_|frame.samples().len()).unwrap();
+                    } else {
+                        break;
+                    }
+                }
+                PlayPauseState::Pause => {
+                    samples_to_write.extend(repeat_n(0, 1000));
+                }
+            }
+
             loop {
                 let dma_available_bytes = transfer
                     .available()
@@ -222,50 +287,6 @@ pub async fn play_pause(mut i2s_resources: I2SResources) {
                     break;
                 }
             }
-            // transfer.push_with(|_|frame.samples().len()).unwrap();
-        } else {
-            break;
         }
     }
-}
-#[embassy_executor::task]
-pub async fn main_task(spawner: Spawner, dac_peripherals: DACResources) {
-    info!("AUDIOTASK: Audio Started");
-    const SINE_WAVE: [i16; 96] = [
-        0, 0, 4277, 4277, 8481, 8481, 12539, 12539, 16383, 16383, 19947, 19947, 23170, 23170,
-        25996, 25996, 28377, 28377, 30273, 30273, 31650, 31650, 32487, 32487, 32767, 32767, 32487,
-        32487, 31650, 30273, 30273, 28377, 28377, 25996, 25996, 23170, 23170, 19947, 19947, 16383,
-        16383, 12539, 12539, 8481, 8481, 4277, 4277, 0, 0, -4277, -4277, -8481, -8481, -12539,
-        -16383, -16383, -19947, -19947, -23170, -23170, -25996, -25996, -28377, -28377, -30273,
-        -30273, -31650, -31650, -32487, -32487, -32767, -32767, -32487, -32487, -31650, -30273,
-        -30273, -28377, -28377, -25996, -25996, -23170, -23170, -19947, -19947, -16383, -16383,
-        -12539, -12539, -8481, -8481, -4277, -4277, -4277, -4277, -4277,
-    ];
-    let mut pos = 0;
-
-    let i2s_driver = I2s::new(
-        dac_peripherals.i2s_module,
-        dac_peripherals.i2s_dma,
-        I2SConfig::new_tdm_philips()
-            .with_bit_order(esp_hal::i2s::master::BitOrder::MsbFirst)
-            .with_sample_rate(Rate::from_khz(48)),
-    )
-    .unwrap();
-    let (_, _, dma_tx_buf, dma_tx_desc) = dma_circular_buffers!(0, 147456);
-    let mut i2s_tx_writer = i2s_driver
-        .i2s_tx
-        .with_bclk(dac_peripherals.i2s_bclk)
-        .with_dout(dac_peripherals.i2s_dout)
-        .with_ws(dac_peripherals.i2s_ws)
-        .build(dma_tx_desc);
-    let _index = 0;
-    for pair in dma_tx_buf.chunks_mut(2) {
-        [pair[0], pair[1]] = [0, 0];
-        // [pair[0], pair[1]] = SINE_WAVE[index % 96].to_ne_bytes();
-        // index += 1;
-    }
-    play_pause(I2SResources {
-        i2s_tx_writer,
-        dma_tx_buf,
-    });
 }

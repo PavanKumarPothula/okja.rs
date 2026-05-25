@@ -1484,6 +1484,7 @@ dependencies = [
  "esp-hal",
  "esp-rtos",
  "field",
+ "heapless 0.9.3",
  "miniflac-sys",
  "mipidsi",
  "panic-rtt-target",

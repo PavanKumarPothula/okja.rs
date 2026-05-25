@@ -1,9 +1,8 @@
 pub mod codec {
-    
-    
 
     use defmt::info;
-use field::field;
+    use field::field;
+    use heapless::String;
     // use crate::audio::codec::dr_flac_bindings::{
     //     drflac_meta_proc, drflac_open_memory_with_metadata, drflac_read_proc, drflac_seek_proc,
     // };
@@ -18,9 +17,12 @@ use field::field;
     }
     // #[derive(defmt::Format)]
     pub struct Metadata {
-        pub title_name: &'static str,
+        pub title_name: heapless::String<256>,
+        pub album_name: heapless::String<256>,
+        pub album_artist: heapless::String<256>,
         pub stream_info: StreamInfo,
         pub metadata_size: usize,
+        pub vorbois_comments_size: usize,
     }
     // struct ByteStreamContainer{
     //     file_offset: usize,
@@ -61,23 +63,35 @@ use field::field;
                     decoder_obj.init();
                     let (metadata_size, metadata) =
                         decoder_obj.read_streaminfo(p_data_const).unwrap();
-                    let (vorbois_comments_size,vorbis_comments ) = decoder_obj.read_vorbis_comments::<128, 256, 16>(&p_data_const[metadata_size..]).unwrap();
-                    let vorbis_comments = vorbis_comments.unwrap();
-
-                    let (title_name, album_name, album_artist);
-                    &vorbis_comments.comments.iter().map(|line|
-                        let key_value = core::str::from_utf8(line).unwrap();
-                        match key_value.trim_start_matches(
-                            "TITLE" => title_name
-                        )
-                    );
+                    let (vorbois_comments_size, vorbis_comments) = decoder_obj
+                        .read_vorbis_comments::<128, 256, 16>(&p_data_const[metadata_size..])
+                        .unwrap();
+                    let vorbis_comments = vorbis_comments.unwrap().comments;
+                    let mut meta = Metadata {
+                        title_name: String::new(),
+                        album_artist: String::new(),
+                        album_name: String::new(),
+                        stream_info: metadata.unwrap(),
+                        metadata_size: metadata_size,
+                        vorbois_comments_size: vorbois_comments_size,
+                    };
+                    &vorbis_comments
+                        .iter()
+                        .map(|line| {
+                            core::str::from_utf8(&line)
+                                .unwrap()
+                                .split_once("=")
+                                .unwrap()
+                        })
+                        .map(|(key, value)| match key {
+                            "TITLE" => meta.title_name.push_str(value).unwrap(),
+                            "ALBUM" => meta.album_name.push_str(value).unwrap(),
+                            "ALBUMARTIST" => meta.album_artist.push_str(value).unwrap(),
+                            _ => todo!(),
+                        });
                     Self::FLAC(MediaContainer {
                         filename: filename,
-                        metadata: Metadata {
-                            title_name: filename,
-                            stream_info: metadata.unwrap(),
-                            metadata_size,
-                        },
+                        metadata: meta,
                         decoder_obj,
                     })
                 }

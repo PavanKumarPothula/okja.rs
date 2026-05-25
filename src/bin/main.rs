@@ -22,6 +22,7 @@ use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 
 use embedded_sdmmc::{LfnBuffer, Mode as FileMode, VolumeIdx};
 
+use okja::audio::{AUDIO_DECODER, PLAY_PAUSE_STATE, parse_metadata};
 use okja::*;
 
 #[embassy_executor::task]
@@ -144,5 +145,20 @@ async fn main(spawner: Spawner) {
     // spawner
     //     .spawn(sdcard_task(app_resource.volume_manager))
     //     .unwrap();
-    spawner.spawn(okja::audio::main_task(spawner, app_resource.dac_peripherals).unwrap());
+    spawner.spawn(okja::audio::player_task(app_resource.dac_peripherals).unwrap());
+
+    static AUDIO_FILENAME: &str = "stereo.flac";
+    static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
+    loop {
+        let mut file_info = audio::FileInfo {
+            file_name: AUDIO_FILENAME,
+            file_bytes: FLAC_AUDIO,
+        };
+        let mut decoder = parse_metadata(&file_info).await;
+        Timer::after(Duration::from_secs(1)).await;
+        AUDIO_DECODER.signal((&mut file_info, &mut decoder));
+        PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Play);
+        Timer::after(Duration::from_secs(5)).await;
+        PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Pause);
+    }
 }

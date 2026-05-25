@@ -55,6 +55,7 @@ tlv320dac3100 = "0.1.0"
 defmt-rtt = "1.2.0"
 embassy-sync = "0.8.0"
 field = "0.1.0"
+heapless = "0.9.3"
 
 # [dev-dependencies]
 # embedded-test = { version = "0.7.1", features = [
