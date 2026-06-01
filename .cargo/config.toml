@@ -1,14 +1,12 @@
 # [target.xtensa-esp32s3-none-elf]
 # runner = "espflash flash --monitor --chip esp32s3"
 
-# [env]
-# ESP_LOG="info"
-
 [target.xtensa-esp32s3-none-elf]
 runner = "probe-rs run --chip=esp32s3 --preverify  --speed 40000"
 
 [env]
 DEFMT_LOG="trace"
+ESP_LOG="trace"
 CC = "xtensa-esp32s3-elf-cc"
 AR = "xtensa-esp32s3-elf-ar"
 CFLAGS = "-mlongcalls"
@@ -17,6 +15,7 @@ CFLAGS = "-mlongcalls"
 rustflags = [
   "-C", "link-arg=-nostartfiles",
   "-Z", "stack-protector=all",
+  "-Z", "emit-stack-sizes",
 ]
 
 target = "xtensa-esp32s3-none-elf"

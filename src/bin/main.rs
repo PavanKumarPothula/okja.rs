@@ -22,7 +22,7 @@ use embedded_graphics::{pixelcolor::Rgb565, prelude::*};
 
 use embedded_sdmmc::{LfnBuffer, Mode as FileMode, VolumeIdx};
 
-use okja::audio::{AUDIO_DECODER, PLAY_PAUSE_STATE, parse_metadata};
+use okja::audio::{AUDIO_DECODER, PLAY_PAUSE_STATE};
 use okja::*;
 
 #[embassy_executor::task]
@@ -124,7 +124,7 @@ async fn main(spawner: Spawner) {
 
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
-    // esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram); // Set as heap
+    esp_alloc::psram_allocator!(peripherals.PSRAM, esp_hal::psram); // Set as heap
 
     let r = split_resources!(peripherals);
     esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 73744);
@@ -147,18 +147,19 @@ async fn main(spawner: Spawner) {
     //     .unwrap();
     spawner.spawn(okja::audio::player_task(app_resource.dac_peripherals).unwrap());
 
+    Timer::after(Duration::from_secs(5)).await;
     static AUDIO_FILENAME: &str = "stereo.flac";
     static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
+    let file_info = audio::FileInfo {
+        file_name: AUDIO_FILENAME,
+        file_bytes: FLAC_AUDIO,
+    };
+    AUDIO_DECODER.reset();
+    AUDIO_DECODER.signal(file_info);
     loop {
-        let mut file_info = audio::FileInfo {
-            file_name: AUDIO_FILENAME,
-            file_bytes: FLAC_AUDIO,
-        };
-        let mut decoder = parse_metadata(&file_info).await;
-        Timer::after(Duration::from_secs(1)).await;
-        AUDIO_DECODER.signal((&mut file_info, &mut decoder));
+        PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Pause);
+        Timer::after(Duration::from_secs(2)).await;
         PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Play);
         Timer::after(Duration::from_secs(5)).await;
-        PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Pause);
     }
 }
