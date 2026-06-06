@@ -1,5 +1,6 @@
 pub(crate) mod codec;
 pub mod player;
+pub(crate) mod dr_flac_bindings;
 
 use core::slice::from_raw_parts;
 

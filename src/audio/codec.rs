@@ -1,11 +1,16 @@
 pub mod codec {
 
     use defmt::info;
+    use cty;
     use heapless::{String, Vec};
     // use crate::audio::codec::dr_flac_bindings::{
     //     drflac_meta_proc, drflac_open_memory_with_metadata, drflac_read_proc, drflac_seek_proc,
     // };
-    use miniflac_sys::{DecodedFrame, FlacDecoder, PictureInfo, StreamInfo, VorbisComments};
+    // use miniflac_sys::{DecodedFrame, FlacDecoder, PictureInfo, StreamInfo, VorbisComments};
+
+    use crate::audio::dr_flac_bindings::{
+        drflac_frame, drflac_metadata, drflac_open_memory_with_metadata, drflac_streaminfo, drflac_vorbis_comment_iterator
+    };
 
     // use claxon::flacreader;
     // use cty::;
@@ -67,6 +72,8 @@ pub mod codec {
                 // "mp3"   => self::mp3,
                 "flac" => {
                     // this actually can happen only once, instead of happening for every fileopen
+                    unsafe { drflac_open_memory_with_metadata(p_data_const,p_data_const.len(),Some(on_meta_read),cty::NULL ,pAllocCallbacks); };
+
                     let mut decoder_obj = FlacDecoder::new();
                     decoder_obj.init();
                     let meta = gather_metadata(&mut decoder_obj, p_data_const);
@@ -299,10 +306,13 @@ pub mod codec {
     /// Returns (new_offset, synced) where synced=true means sync succeeded.
     fn sync_loop(dec: &mut FlacDecoder, data: &[u8], mut pos: usize) -> (usize, bool) {
         while pos < data.len() {
-            match dec.sync(&data[pos..])
-                        .inspect_err(|this_error| {
-                            info!("error says {:#?}", defmt::Debug2Format(&this_error))
-                        }).unwrap(){
+            match dec
+                .sync(&data[pos..])
+                .inspect_err(|this_error| {
+                    info!("error says {:#?}", defmt::Debug2Format(&this_error))
+                })
+                .unwrap()
+            {
                 (consumed, true) => {
                     pos += consumed;
                     return (pos, true);
@@ -317,4 +327,10 @@ pub mod codec {
         }
         (pos, false)
     }
+
+    unsafe extern "C" fn on_meta_read(p_user_data: *mut cty::c_void, p_metadata: *mut drflac_metadata){
+        p_user_data();
+
+    }
+
 }
