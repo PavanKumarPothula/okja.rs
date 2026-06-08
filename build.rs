@@ -23,13 +23,15 @@ fn build_and_gen_bind_ffi_code() {
     // to bindgen, and lets you build up options for
     // the resulting bindings.
     bindgen::Builder::default()
+        .header("vendor/dr_libs/dr_flac.h")
         .clang_arg("--target=xtensa-esp32s3-none-elf")
         .clang_arg("-fretain-comments-from-system-headers")
+        .clang_arg("-fparse-all-comments")
         .generate_comments(true)
+        .c_naming(true)
         .ctypes_prefix("cty")
         // The input header we would like to generate
         // bindings for.
-        .header("vendor/dr_libs/dr_flac.h")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         // .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))

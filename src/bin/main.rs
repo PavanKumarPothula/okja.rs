@@ -147,7 +147,7 @@ async fn main(spawner: Spawner) {
     //     .unwrap();
     spawner.spawn(okja::audio::player_task(app_resource.dac_peripherals).unwrap());
 
-    Timer::after(Duration::from_secs(5)).await;
+    Timer::after(Duration::from_secs(1)).await;
     static AUDIO_FILENAME: &str = "stereo.flac";
     static FLAC_AUDIO: &[u8] = include_bytes!("../../assets/stereo.flac");
     let file_info = audio::FileInfo {
@@ -157,9 +157,9 @@ async fn main(spawner: Spawner) {
     AUDIO_DECODER.reset();
     AUDIO_DECODER.signal(file_info);
     loop {
-        PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Pause);
-        Timer::after(Duration::from_secs(2)).await;
         PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Play);
         Timer::after(Duration::from_secs(5)).await;
+        PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Pause);
+        Timer::after(Duration::from_secs(1)).await;
     }
 }

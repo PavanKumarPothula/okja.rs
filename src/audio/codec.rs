@@ -1,6 +1,6 @@
 pub mod codec {
 
-    use core::{ffi::c_void, i16};
+    use core::{ffi::c_void, i16, ptr};
 
     use cty;
     use defmt::info;
@@ -11,7 +11,7 @@ pub mod codec {
     // use miniflac_sys::{DecodedFrame, FlacDecoder, PictureInfo, StreamInfo, VorbisComments};
 
     use crate::audio::dr_flac_bindings::{
-        self, drflac, drflac_allocation_callbacks, drflac_frame, drflac_metadata,
+        self, drflac, drflac_allocation_callbacks, drflac_frame, drflac_int16, drflac_metadata,
         drflac_open_memory, drflac_open_memory_with_metadata, drflac_streaminfo, drflac_uint64,
         drflac_vorbis_comment_iterator,
     };
@@ -79,17 +79,13 @@ pub mod codec {
                     // this actually can happen only once, instead of happening for every fileopen
                     // unsafe { drflac_open_memory_with_metadata(p_data_const,p_data_const.len(),Some(on_meta_read),cty::NULL ,pAllocCallbacks); };
                     unsafe {
-                        let mut decoder_obj = drflac_open_memory(
+                        let decoder_obj = drflac_open_memory(
                             p_data_const.as_ptr() as *const c_void,
                             p_data_const.len(),
-                            &drflac_allocation_callbacks {
-                                pUserData: todo!(),
-                                onMalloc: todo!(),
-                                onRealloc: todo!(),
-                                onFree: todo!(),
-                            } as *const drflac_allocation_callbacks,
+                            ptr::null(),
                         );
-
+                        // info! {"totalPCMFrameCount:{}",
+                        // (*decoder_obj).totalPCMFrameCount};
                         // let meta = gather_metadata(&mut decoder_obj, p_data_const);
                         Self::FLAC(MediaContainer {
                             filename: filename,
@@ -101,20 +97,17 @@ pub mod codec {
                 _ => panic!("what!"),
             }
         }
-        pub fn get_pcm_samples(&mut self, byte_stream: &[u8], mut pos: usize) -> DecoderResult {
+        pub fn get_pcm_samples(&mut self, frames_to_read: u64, pcm_frames: &[i16]) -> u64 {
             match self {
-                Decoder::FLAC(current_metadata_container) => {
-                    // let mut buf = [0_i16; 512];
-                    let mut buf = 512_i16;
-                    unsafe {
-                        dr_flac_bindings::drflac_read_pcm_frames_s16(
-                            current_metadata_container.decoder_obj,
-                            10,
-                            &mut buf as *mut i16,
-                        );
-                        buf
-                    }
-                }
+                Decoder::FLAC(current_metadata_container) => unsafe {
+                    let frames_read = dr_flac_bindings::drflac_read_pcm_frames_s16(
+                        current_metadata_container.decoder_obj,
+                        frames_to_read,
+                        pcm_frames.as_ptr() as *mut i16,
+                    );
+                    info! {"pBuffOut:{}", &pcm_frames};
+                    frames_read
+                },
             }
         }
         //     pub fn get_pcm_samples(&mut self, byte_stream: &[u8], mut pos: usize) -> DecoderResult {

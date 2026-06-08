@@ -172,21 +172,25 @@ pub const DRFLAC_PICTURE_TYPE_ILLUSTRATION: u32 = 18;
 pub const DRFLAC_PICTURE_TYPE_BAND_LOGOTYPE: u32 = 19;
 pub const DRFLAC_PICTURE_TYPE_PUBLISHER_LOGOTYPE: u32 = 20;
 pub type wchar_t = cty::c_int;
+#[doc = " Define 'max_align_t' to match the GCC definition."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct max_align_t {
+pub struct struct_max_align_t {
     pub __clang_max_align_nonce1: cty::c_longlong,
     pub __clang_max_align_nonce2: f64,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of max_align_t"][::core::mem::size_of::<max_align_t>() - 16usize];
-    ["Alignment of max_align_t"][::core::mem::align_of::<max_align_t>() - 8usize];
-    ["Offset of field: max_align_t::__clang_max_align_nonce1"]
-        [::core::mem::offset_of!(max_align_t, __clang_max_align_nonce1) - 0usize];
-    ["Offset of field: max_align_t::__clang_max_align_nonce2"]
-        [::core::mem::offset_of!(max_align_t, __clang_max_align_nonce2) - 8usize];
+    ["Size of struct_max_align_t"][::core::mem::size_of::<struct_max_align_t>() - 16usize];
+    ["Alignment of struct_max_align_t"][::core::mem::align_of::<struct_max_align_t>() - 8usize];
+    ["Offset of field: struct_max_align_t::__clang_max_align_nonce1"]
+        [::core::mem::offset_of!(struct_max_align_t, __clang_max_align_nonce1) - 0usize];
+    ["Offset of field: struct_max_align_t::__clang_max_align_nonce2"]
+        [::core::mem::offset_of!(struct_max_align_t, __clang_max_align_nonce2) - 8usize];
 };
+#[doc = " Define 'max_align_t' to match the GCC definition."]
+pub type max_align_t = struct_max_align_t;
+#[doc = " Sized Types"]
 pub type drflac_int8 = cty::c_schar;
 pub type drflac_uint8 = cty::c_uchar;
 pub type drflac_int16 = cty::c_short;
@@ -208,9 +212,10 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub fn drflac_version_string() -> *const cty::c_char;
 }
+#[doc = " Allocation Callbacks"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_allocation_callbacks {
+pub struct struct_drflac_allocation_callbacks {
     pub pUserData: *mut cty::c_void,
     pub onMalloc: ::core::option::Option<
         unsafe extern "C" fn(sz: usize, pUserData: *mut cty::c_void) -> *mut cty::c_void,
@@ -228,49 +233,59 @@ pub struct drflac_allocation_callbacks {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_allocation_callbacks"]
-        [::core::mem::size_of::<drflac_allocation_callbacks>() - 16usize];
-    ["Alignment of drflac_allocation_callbacks"]
-        [::core::mem::align_of::<drflac_allocation_callbacks>() - 4usize];
-    ["Offset of field: drflac_allocation_callbacks::pUserData"]
-        [::core::mem::offset_of!(drflac_allocation_callbacks, pUserData) - 0usize];
-    ["Offset of field: drflac_allocation_callbacks::onMalloc"]
-        [::core::mem::offset_of!(drflac_allocation_callbacks, onMalloc) - 4usize];
-    ["Offset of field: drflac_allocation_callbacks::onRealloc"]
-        [::core::mem::offset_of!(drflac_allocation_callbacks, onRealloc) - 8usize];
-    ["Offset of field: drflac_allocation_callbacks::onFree"]
-        [::core::mem::offset_of!(drflac_allocation_callbacks, onFree) - 12usize];
+    ["Size of struct_drflac_allocation_callbacks"]
+        [::core::mem::size_of::<struct_drflac_allocation_callbacks>() - 16usize];
+    ["Alignment of struct_drflac_allocation_callbacks"]
+        [::core::mem::align_of::<struct_drflac_allocation_callbacks>() - 4usize];
+    ["Offset of field: struct_drflac_allocation_callbacks::pUserData"]
+        [::core::mem::offset_of!(struct_drflac_allocation_callbacks, pUserData) - 0usize];
+    ["Offset of field: struct_drflac_allocation_callbacks::onMalloc"]
+        [::core::mem::offset_of!(struct_drflac_allocation_callbacks, onMalloc) - 4usize];
+    ["Offset of field: struct_drflac_allocation_callbacks::onRealloc"]
+        [::core::mem::offset_of!(struct_drflac_allocation_callbacks, onRealloc) - 8usize];
+    ["Offset of field: struct_drflac_allocation_callbacks::onFree"]
+        [::core::mem::offset_of!(struct_drflac_allocation_callbacks, onFree) - 12usize];
 };
+#[doc = " Allocation Callbacks"]
+pub type drflac_allocation_callbacks = struct_drflac_allocation_callbacks;
 pub type drflac_cache_t = drflac_uint32;
-pub const drflac_container_drflac_container_native: drflac_container = 0;
-pub const drflac_container_drflac_container_ogg: drflac_container = 1;
-pub const drflac_container_drflac_container_unknown: drflac_container = 2;
-pub type drflac_container = cty::c_uint;
-pub const drflac_seek_origin_DRFLAC_SEEK_SET: drflac_seek_origin = 0;
-pub const drflac_seek_origin_DRFLAC_SEEK_CUR: drflac_seek_origin = 1;
-pub const drflac_seek_origin_DRFLAC_SEEK_END: drflac_seek_origin = 2;
-pub type drflac_seek_origin = cty::c_uint;
+pub const enum_drflac_container_drflac_container_native: enum_drflac_container = 0;
+pub const enum_drflac_container_drflac_container_ogg: enum_drflac_container = 1;
+pub const enum_drflac_container_drflac_container_unknown: enum_drflac_container = 2;
+pub type enum_drflac_container = cty::c_uint;
+pub use self::enum_drflac_container as drflac_container;
+pub const enum_drflac_seek_origin_DRFLAC_SEEK_SET: enum_drflac_seek_origin = 0;
+pub const enum_drflac_seek_origin_DRFLAC_SEEK_CUR: enum_drflac_seek_origin = 1;
+pub const enum_drflac_seek_origin_DRFLAC_SEEK_END: enum_drflac_seek_origin = 2;
+pub type enum_drflac_seek_origin = cty::c_uint;
+pub use self::enum_drflac_seek_origin as drflac_seek_origin;
+#[doc = " The order of members in this structure is important because we map this directly to the raw data within the SEEKTABLE metadata block."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_seekpoint {
+pub struct struct_drflac_seekpoint {
     pub firstPCMFrame: drflac_uint64,
+    #[doc = " The offset from the first byte of the header of the first frame."]
     pub flacFrameOffset: drflac_uint64,
     pub pcmFrameCount: drflac_uint16,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_seekpoint"][::core::mem::size_of::<drflac_seekpoint>() - 24usize];
-    ["Alignment of drflac_seekpoint"][::core::mem::align_of::<drflac_seekpoint>() - 8usize];
-    ["Offset of field: drflac_seekpoint::firstPCMFrame"]
-        [::core::mem::offset_of!(drflac_seekpoint, firstPCMFrame) - 0usize];
-    ["Offset of field: drflac_seekpoint::flacFrameOffset"]
-        [::core::mem::offset_of!(drflac_seekpoint, flacFrameOffset) - 8usize];
-    ["Offset of field: drflac_seekpoint::pcmFrameCount"]
-        [::core::mem::offset_of!(drflac_seekpoint, pcmFrameCount) - 16usize];
+    ["Size of struct_drflac_seekpoint"]
+        [::core::mem::size_of::<struct_drflac_seekpoint>() - 24usize];
+    ["Alignment of struct_drflac_seekpoint"]
+        [::core::mem::align_of::<struct_drflac_seekpoint>() - 8usize];
+    ["Offset of field: struct_drflac_seekpoint::firstPCMFrame"]
+        [::core::mem::offset_of!(struct_drflac_seekpoint, firstPCMFrame) - 0usize];
+    ["Offset of field: struct_drflac_seekpoint::flacFrameOffset"]
+        [::core::mem::offset_of!(struct_drflac_seekpoint, flacFrameOffset) - 8usize];
+    ["Offset of field: struct_drflac_seekpoint::pcmFrameCount"]
+        [::core::mem::offset_of!(struct_drflac_seekpoint, pcmFrameCount) - 16usize];
 };
+#[doc = " The order of members in this structure is important because we map this directly to the raw data within the SEEKTABLE metadata block."]
+pub type drflac_seekpoint = struct_drflac_seekpoint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_streaminfo {
+pub struct struct_drflac_streaminfo {
     pub minBlockSizeInPCMFrames: drflac_uint16,
     pub maxBlockSizeInPCMFrames: drflac_uint16,
     pub minFrameSizeInPCMFrames: drflac_uint32,
@@ -283,105 +298,120 @@ pub struct drflac_streaminfo {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_streaminfo"][::core::mem::size_of::<drflac_streaminfo>() - 48usize];
-    ["Alignment of drflac_streaminfo"][::core::mem::align_of::<drflac_streaminfo>() - 8usize];
-    ["Offset of field: drflac_streaminfo::minBlockSizeInPCMFrames"]
-        [::core::mem::offset_of!(drflac_streaminfo, minBlockSizeInPCMFrames) - 0usize];
-    ["Offset of field: drflac_streaminfo::maxBlockSizeInPCMFrames"]
-        [::core::mem::offset_of!(drflac_streaminfo, maxBlockSizeInPCMFrames) - 2usize];
-    ["Offset of field: drflac_streaminfo::minFrameSizeInPCMFrames"]
-        [::core::mem::offset_of!(drflac_streaminfo, minFrameSizeInPCMFrames) - 4usize];
-    ["Offset of field: drflac_streaminfo::maxFrameSizeInPCMFrames"]
-        [::core::mem::offset_of!(drflac_streaminfo, maxFrameSizeInPCMFrames) - 8usize];
-    ["Offset of field: drflac_streaminfo::sampleRate"]
-        [::core::mem::offset_of!(drflac_streaminfo, sampleRate) - 12usize];
-    ["Offset of field: drflac_streaminfo::channels"]
-        [::core::mem::offset_of!(drflac_streaminfo, channels) - 16usize];
-    ["Offset of field: drflac_streaminfo::bitsPerSample"]
-        [::core::mem::offset_of!(drflac_streaminfo, bitsPerSample) - 17usize];
-    ["Offset of field: drflac_streaminfo::totalPCMFrameCount"]
-        [::core::mem::offset_of!(drflac_streaminfo, totalPCMFrameCount) - 24usize];
-    ["Offset of field: drflac_streaminfo::md5"]
-        [::core::mem::offset_of!(drflac_streaminfo, md5) - 32usize];
+    ["Size of struct_drflac_streaminfo"]
+        [::core::mem::size_of::<struct_drflac_streaminfo>() - 48usize];
+    ["Alignment of struct_drflac_streaminfo"]
+        [::core::mem::align_of::<struct_drflac_streaminfo>() - 8usize];
+    ["Offset of field: struct_drflac_streaminfo::minBlockSizeInPCMFrames"]
+        [::core::mem::offset_of!(struct_drflac_streaminfo, minBlockSizeInPCMFrames) - 0usize];
+    ["Offset of field: struct_drflac_streaminfo::maxBlockSizeInPCMFrames"]
+        [::core::mem::offset_of!(struct_drflac_streaminfo, maxBlockSizeInPCMFrames) - 2usize];
+    ["Offset of field: struct_drflac_streaminfo::minFrameSizeInPCMFrames"]
+        [::core::mem::offset_of!(struct_drflac_streaminfo, minFrameSizeInPCMFrames) - 4usize];
+    ["Offset of field: struct_drflac_streaminfo::maxFrameSizeInPCMFrames"]
+        [::core::mem::offset_of!(struct_drflac_streaminfo, maxFrameSizeInPCMFrames) - 8usize];
+    ["Offset of field: struct_drflac_streaminfo::sampleRate"]
+        [::core::mem::offset_of!(struct_drflac_streaminfo, sampleRate) - 12usize];
+    ["Offset of field: struct_drflac_streaminfo::channels"]
+        [::core::mem::offset_of!(struct_drflac_streaminfo, channels) - 16usize];
+    ["Offset of field: struct_drflac_streaminfo::bitsPerSample"]
+        [::core::mem::offset_of!(struct_drflac_streaminfo, bitsPerSample) - 17usize];
+    ["Offset of field: struct_drflac_streaminfo::totalPCMFrameCount"]
+        [::core::mem::offset_of!(struct_drflac_streaminfo, totalPCMFrameCount) - 24usize];
+    ["Offset of field: struct_drflac_streaminfo::md5"]
+        [::core::mem::offset_of!(struct_drflac_streaminfo, md5) - 32usize];
 };
+pub type drflac_streaminfo = struct_drflac_streaminfo;
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct drflac_metadata {
+pub struct struct_drflac_metadata {
+    #[doc = "The metadata type. Use this to know how to interpret the data below. Will be set to one of the\nDRFLAC_METADATA_BLOCK_TYPE_* tokens."]
     pub type_: drflac_uint32,
+    #[doc = " The size in bytes of the block and the buffer pointed to by pRawData if it's non-NULL."]
     pub rawDataSize: drflac_uint32,
+    #[doc = " The offset in the stream of the raw data."]
     pub rawDataOffset: drflac_uint64,
+    #[doc = "A pointer to the raw data. This points to a temporary buffer so don't hold on to it. It's best to\nnot modify the contents of this buffer. Use the structures below for more meaningful and structured\ninformation about the metadata. It's possible for this to be null."]
     pub pRawData: *const cty::c_void,
-    pub data: drflac_metadata__bindgen_ty_1,
+    pub data: union_drflac_metadata__bindgen_ty_1,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub union drflac_metadata__bindgen_ty_1 {
+pub union union_drflac_metadata__bindgen_ty_1 {
     pub streaminfo: drflac_streaminfo,
-    pub padding: drflac_metadata__bindgen_ty_1__bindgen_ty_1,
-    pub application: drflac_metadata__bindgen_ty_1__bindgen_ty_2,
-    pub seektable: drflac_metadata__bindgen_ty_1__bindgen_ty_3,
-    pub vorbis_comment: drflac_metadata__bindgen_ty_1__bindgen_ty_4,
-    pub cuesheet: drflac_metadata__bindgen_ty_1__bindgen_ty_5,
-    pub picture: drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+    pub padding: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_1,
+    pub application: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2,
+    pub seektable: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3,
+    pub vorbis_comment: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4,
+    pub cuesheet: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5,
+    pub picture: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_metadata__bindgen_ty_1__bindgen_ty_1 {
+pub struct struct_drflac_metadata__bindgen_ty_1__bindgen_ty_1 {
     pub unused: cty::c_int,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_metadata__bindgen_ty_1__bindgen_ty_1"]
-        [::core::mem::size_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_1>() - 4usize];
-    ["Alignment of drflac_metadata__bindgen_ty_1__bindgen_ty_1"]
-        [::core::mem::align_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_1>() - 4usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_1::unused"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_1, unused) - 0usize];
+    ["Size of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_1"]
+        [::core::mem::size_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_1>() - 4usize];
+    ["Alignment of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_1"]
+        [::core::mem::align_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_1>() - 4usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_1::unused"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_1,
+        unused
+    ) - 0usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_metadata__bindgen_ty_1__bindgen_ty_2 {
+pub struct struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2 {
     pub id: drflac_uint32,
     pub pData: *const cty::c_void,
     pub dataSize: drflac_uint32,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_metadata__bindgen_ty_1__bindgen_ty_2"]
-        [::core::mem::size_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_2>() - 12usize];
-    ["Alignment of drflac_metadata__bindgen_ty_1__bindgen_ty_2"]
-        [::core::mem::align_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_2>() - 4usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_2::id"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_2, id) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_2::pData"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_2, pData) - 4usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_2::dataSize"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_2, dataSize) - 8usize];
+    ["Size of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2"]
+        [::core::mem::size_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2>() - 12usize];
+    ["Alignment of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2"]
+        [::core::mem::align_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2>() - 4usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2::id"]
+        [::core::mem::offset_of!(struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2, id) - 0usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2::pData"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2,
+        pData
+    ) - 4usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2::dataSize"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_2,
+        dataSize
+    ) - 8usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_metadata__bindgen_ty_1__bindgen_ty_3 {
+pub struct struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3 {
     pub seekpointCount: drflac_uint32,
     pub pSeekpoints: *const drflac_seekpoint,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_metadata__bindgen_ty_1__bindgen_ty_3"]
-        [::core::mem::size_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_3>() - 8usize];
-    ["Alignment of drflac_metadata__bindgen_ty_1__bindgen_ty_3"]
-        [::core::mem::align_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_3>() - 4usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_3::seekpointCount"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_3,
+    ["Size of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3"]
+        [::core::mem::size_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3>() - 8usize];
+    ["Alignment of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3"]
+        [::core::mem::align_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3>() - 4usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3::seekpointCount"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3,
         seekpointCount
-    ) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_3::pSeekpoints"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_3,
+    )
+        - 0usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3::pSeekpoints"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_3,
         pSeekpoints
-    ) - 4usize];
+    )
+        - 4usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_metadata__bindgen_ty_1__bindgen_ty_4 {
+pub struct struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4 {
     pub vendorLength: drflac_uint32,
     pub vendor: *const cty::c_char,
     pub commentCount: drflac_uint32,
@@ -389,26 +419,32 @@ pub struct drflac_metadata__bindgen_ty_1__bindgen_ty_4 {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_metadata__bindgen_ty_1__bindgen_ty_4"]
-        [::core::mem::size_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_4>() - 16usize];
-    ["Alignment of drflac_metadata__bindgen_ty_1__bindgen_ty_4"]
-        [::core::mem::align_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_4>() - 4usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_4::vendorLength"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_4,
+    ["Size of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4"]
+        [::core::mem::size_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4>() - 16usize];
+    ["Alignment of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4"]
+        [::core::mem::align_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4>() - 4usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4::vendorLength"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4,
         vendorLength
-    ) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_4::vendor"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_4, vendor) - 4usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_4::commentCount"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_4,
+    )
+        - 0usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4::vendor"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4,
+        vendor
+    ) - 4usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4::commentCount"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4,
         commentCount
-    ) - 8usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_4::pComments"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_4, pComments) - 12usize];
+    )
+        - 8usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4::pComments"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_4,
+        pComments
+    ) - 12usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_metadata__bindgen_ty_1__bindgen_ty_5 {
+pub struct struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5 {
     pub catalog: [cty::c_char; 128usize],
     pub leadInSampleCount: drflac_uint64,
     pub isCD: drflac_bool32,
@@ -417,31 +453,37 @@ pub struct drflac_metadata__bindgen_ty_1__bindgen_ty_5 {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_metadata__bindgen_ty_1__bindgen_ty_5"]
-        [::core::mem::size_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_5>() - 152usize];
-    ["Alignment of drflac_metadata__bindgen_ty_1__bindgen_ty_5"]
-        [::core::mem::align_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_5>() - 8usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_5::catalog"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_5, catalog) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_5::leadInSampleCount"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_5,
+    ["Size of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5"]
+        [::core::mem::size_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5>() - 152usize];
+    ["Alignment of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5"]
+        [::core::mem::align_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5>() - 8usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5::catalog"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5,
+        catalog
+    ) - 0usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5::leadInSampleCount"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5,
         leadInSampleCount
     )
         - 128usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_5::isCD"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_5, isCD) - 136usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_5::trackCount"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_5,
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5::isCD"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5,
+        isCD
+    ) - 136usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5::trackCount"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5,
         trackCount
-    ) - 140usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_5::pTrackData"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_5,
+    )
+        - 140usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5::pTrackData"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_5,
         pTrackData
-    ) - 144usize];
+    )
+        - 144usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_metadata__bindgen_ty_1__bindgen_ty_6 {
+pub struct struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6 {
     pub type_: drflac_uint32,
     pub mimeLength: drflac_uint32,
     pub mime: *const cty::c_char,
@@ -452,92 +494,111 @@ pub struct drflac_metadata__bindgen_ty_1__bindgen_ty_6 {
     pub colorDepth: drflac_uint32,
     pub indexColorCount: drflac_uint32,
     pub pictureDataSize: drflac_uint32,
+    #[doc = " Offset from the start of the stream."]
     pub pictureDataOffset: drflac_uint64,
     pub pPictureData: *const drflac_uint8,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_metadata__bindgen_ty_1__bindgen_ty_6"]
-        [::core::mem::size_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_6>() - 56usize];
-    ["Alignment of drflac_metadata__bindgen_ty_1__bindgen_ty_6"]
-        [::core::mem::align_of::<drflac_metadata__bindgen_ty_1__bindgen_ty_6>() - 8usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::type_"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_6, type_) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::mimeLength"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_6, mimeLength) - 4usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::mime"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_6, mime) - 8usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::descriptionLength"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+    ["Size of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6"]
+        [::core::mem::size_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6>() - 56usize];
+    ["Alignment of struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6"]
+        [::core::mem::align_of::<struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6>() - 8usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::type_"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+        type_
+    ) - 0usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::mimeLength"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+        mimeLength
+    ) - 4usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::mime"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+        mime
+    ) - 8usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::descriptionLength"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
         descriptionLength
     )
         - 12usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::description"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::description"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
         description
-    ) - 16usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::width"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_6, width) - 20usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::height"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1__bindgen_ty_6, height) - 24usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::colorDepth"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+    )
+        - 16usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::width"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+        width
+    ) - 20usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::height"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+        height
+    ) - 24usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::colorDepth"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
         colorDepth
-    ) - 28usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::indexColorCount"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+    )
+        - 28usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::indexColorCount"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
         indexColorCount
-    ) - 32usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::pictureDataSize"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+    )
+        - 32usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::pictureDataSize"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
         pictureDataSize
-    ) - 36usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::pictureDataOffset"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+    )
+        - 36usize];
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::pictureDataOffset"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
         pictureDataOffset
     )
         - 40usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1__bindgen_ty_6::pPictureData"][::core::mem::offset_of!(
-        drflac_metadata__bindgen_ty_1__bindgen_ty_6,
+    ["Offset of field: struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6::pPictureData"][::core::mem::offset_of!(
+        struct_drflac_metadata__bindgen_ty_1__bindgen_ty_6,
         pPictureData
-    ) - 48usize];
+    )
+        - 48usize];
 };
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_metadata__bindgen_ty_1"]
-        [::core::mem::size_of::<drflac_metadata__bindgen_ty_1>() - 152usize];
-    ["Alignment of drflac_metadata__bindgen_ty_1"]
-        [::core::mem::align_of::<drflac_metadata__bindgen_ty_1>() - 8usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1::streaminfo"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1, streaminfo) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1::padding"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1, padding) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1::application"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1, application) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1::seektable"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1, seektable) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1::vorbis_comment"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1, vorbis_comment) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1::cuesheet"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1, cuesheet) - 0usize];
-    ["Offset of field: drflac_metadata__bindgen_ty_1::picture"]
-        [::core::mem::offset_of!(drflac_metadata__bindgen_ty_1, picture) - 0usize];
+    ["Size of union_drflac_metadata__bindgen_ty_1"]
+        [::core::mem::size_of::<union_drflac_metadata__bindgen_ty_1>() - 152usize];
+    ["Alignment of union_drflac_metadata__bindgen_ty_1"]
+        [::core::mem::align_of::<union_drflac_metadata__bindgen_ty_1>() - 8usize];
+    ["Offset of field: union_drflac_metadata__bindgen_ty_1::streaminfo"]
+        [::core::mem::offset_of!(union_drflac_metadata__bindgen_ty_1, streaminfo) - 0usize];
+    ["Offset of field: union_drflac_metadata__bindgen_ty_1::padding"]
+        [::core::mem::offset_of!(union_drflac_metadata__bindgen_ty_1, padding) - 0usize];
+    ["Offset of field: union_drflac_metadata__bindgen_ty_1::application"]
+        [::core::mem::offset_of!(union_drflac_metadata__bindgen_ty_1, application) - 0usize];
+    ["Offset of field: union_drflac_metadata__bindgen_ty_1::seektable"]
+        [::core::mem::offset_of!(union_drflac_metadata__bindgen_ty_1, seektable) - 0usize];
+    ["Offset of field: union_drflac_metadata__bindgen_ty_1::vorbis_comment"]
+        [::core::mem::offset_of!(union_drflac_metadata__bindgen_ty_1, vorbis_comment) - 0usize];
+    ["Offset of field: union_drflac_metadata__bindgen_ty_1::cuesheet"]
+        [::core::mem::offset_of!(union_drflac_metadata__bindgen_ty_1, cuesheet) - 0usize];
+    ["Offset of field: union_drflac_metadata__bindgen_ty_1::picture"]
+        [::core::mem::offset_of!(union_drflac_metadata__bindgen_ty_1, picture) - 0usize];
 };
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_metadata"][::core::mem::size_of::<drflac_metadata>() - 176usize];
-    ["Alignment of drflac_metadata"][::core::mem::align_of::<drflac_metadata>() - 8usize];
-    ["Offset of field: drflac_metadata::type_"]
-        [::core::mem::offset_of!(drflac_metadata, type_) - 0usize];
-    ["Offset of field: drflac_metadata::rawDataSize"]
-        [::core::mem::offset_of!(drflac_metadata, rawDataSize) - 4usize];
-    ["Offset of field: drflac_metadata::rawDataOffset"]
-        [::core::mem::offset_of!(drflac_metadata, rawDataOffset) - 8usize];
-    ["Offset of field: drflac_metadata::pRawData"]
-        [::core::mem::offset_of!(drflac_metadata, pRawData) - 16usize];
-    ["Offset of field: drflac_metadata::data"]
-        [::core::mem::offset_of!(drflac_metadata, data) - 24usize];
+    ["Size of struct_drflac_metadata"][::core::mem::size_of::<struct_drflac_metadata>() - 176usize];
+    ["Alignment of struct_drflac_metadata"]
+        [::core::mem::align_of::<struct_drflac_metadata>() - 8usize];
+    ["Offset of field: struct_drflac_metadata::type_"]
+        [::core::mem::offset_of!(struct_drflac_metadata, type_) - 0usize];
+    ["Offset of field: struct_drflac_metadata::rawDataSize"]
+        [::core::mem::offset_of!(struct_drflac_metadata, rawDataSize) - 4usize];
+    ["Offset of field: struct_drflac_metadata::rawDataOffset"]
+        [::core::mem::offset_of!(struct_drflac_metadata, rawDataOffset) - 8usize];
+    ["Offset of field: struct_drflac_metadata::pRawData"]
+        [::core::mem::offset_of!(struct_drflac_metadata, pRawData) - 16usize];
+    ["Offset of field: struct_drflac_metadata::data"]
+        [::core::mem::offset_of!(struct_drflac_metadata, data) - 24usize];
 };
+pub type drflac_metadata = struct_drflac_metadata;
+#[doc = "Callback for when data needs to be read from the client.\n\n\nParameters\n----------\npUserData (in)\nThe user data that was passed to drflac_open() and family.\n\npBufferOut (out)\nThe output buffer.\n\nbytesToRead (in)\nThe number of bytes to read.\n\n\nReturn Value\n------------\nThe number of bytes actually read.\n\n\nRemarks\n-------\nA return value of less than bytesToRead indicates the end of the stream. Do _not_ return from this callback until either the entire bytesToRead is filled or\nyou have reached the end of the stream."]
 pub type drflac_read_proc = ::core::option::Option<
     unsafe extern "C" fn(
         pUserData: *mut cty::c_void,
@@ -545,6 +606,7 @@ pub type drflac_read_proc = ::core::option::Option<
         bytesToRead: usize,
     ) -> usize,
 >;
+#[doc = "Callback for when data needs to be seeked.\n\n\nParameters\n----------\npUserData (in)\nThe user data that was passed to drflac_open() and family.\n\noffset (in)\nThe number of bytes to move, relative to the origin. Will never be negative.\n\norigin (in)\nThe origin of the seek - the current position, the start of the stream, or the end of the stream.\n\n\nReturn Value\n------------\nWhether or not the seek was successful.\n\n\nRemarks\n-------\nSeeking relative to the start and the current position must always be supported. If seeking from the end of the stream is not supported, return DRFLAC_FALSE.\n\nWhen seeking to a PCM frame using drflac_seek_to_pcm_frame(), dr_flac may call this with an offset beyond the end of the FLAC stream. This needs to be detected\nand handled by returning DRFLAC_FALSE."]
 pub type drflac_seek_proc = ::core::option::Option<
     unsafe extern "C" fn(
         pUserData: *mut cty::c_void,
@@ -552,204 +614,276 @@ pub type drflac_seek_proc = ::core::option::Option<
         origin: drflac_seek_origin,
     ) -> drflac_bool32,
 >;
+#[doc = "Callback for when the current position in the stream needs to be retrieved.\n\n\nParameters\n----------\npUserData (in)\nThe user data that was passed to drflac_open() and family.\n\npCursor (out)\nA pointer to a variable to receive the current position in the stream.\n\n\nReturn Value\n------------\nWhether or not the operation was successful."]
 pub type drflac_tell_proc = ::core::option::Option<
     unsafe extern "C" fn(pUserData: *mut cty::c_void, pCursor: *mut drflac_int64) -> drflac_bool32,
 >;
+#[doc = "Callback for when a metadata block is read.\n\n\nParameters\n----------\npUserData (in)\nThe user data that was passed to drflac_open() and family.\n\npMetadata (in)\nA pointer to a structure containing the data of the metadata block.\n\n\nRemarks\n-------\nUse pMetadata->type to determine which metadata block is being handled and how to read the data. This\nwill be set to one of the DRFLAC_METADATA_BLOCK_TYPE_* tokens."]
 pub type drflac_meta_proc = ::core::option::Option<
     unsafe extern "C" fn(pUserData: *mut cty::c_void, pMetadata: *mut drflac_metadata),
 >;
+#[doc = " Structure for internal use. Only used for decoders opened with drflac_open_memory."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac__memory_stream {
+pub struct struct_drflac__memory_stream {
     pub data: *const drflac_uint8,
     pub dataSize: usize,
     pub currentReadPos: usize,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac__memory_stream"][::core::mem::size_of::<drflac__memory_stream>() - 12usize];
-    ["Alignment of drflac__memory_stream"]
-        [::core::mem::align_of::<drflac__memory_stream>() - 4usize];
-    ["Offset of field: drflac__memory_stream::data"]
-        [::core::mem::offset_of!(drflac__memory_stream, data) - 0usize];
-    ["Offset of field: drflac__memory_stream::dataSize"]
-        [::core::mem::offset_of!(drflac__memory_stream, dataSize) - 4usize];
-    ["Offset of field: drflac__memory_stream::currentReadPos"]
-        [::core::mem::offset_of!(drflac__memory_stream, currentReadPos) - 8usize];
+    ["Size of struct_drflac__memory_stream"]
+        [::core::mem::size_of::<struct_drflac__memory_stream>() - 12usize];
+    ["Alignment of struct_drflac__memory_stream"]
+        [::core::mem::align_of::<struct_drflac__memory_stream>() - 4usize];
+    ["Offset of field: struct_drflac__memory_stream::data"]
+        [::core::mem::offset_of!(struct_drflac__memory_stream, data) - 0usize];
+    ["Offset of field: struct_drflac__memory_stream::dataSize"]
+        [::core::mem::offset_of!(struct_drflac__memory_stream, dataSize) - 4usize];
+    ["Offset of field: struct_drflac__memory_stream::currentReadPos"]
+        [::core::mem::offset_of!(struct_drflac__memory_stream, currentReadPos) - 8usize];
 };
+#[doc = " Structure for internal use. Only used for decoders opened with drflac_open_memory."]
+pub type drflac__memory_stream = struct_drflac__memory_stream;
+#[doc = " Structure for internal use. Used for bit streaming."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_bs {
+pub struct struct_drflac_bs {
+    #[doc = " The function to call when more data needs to be read."]
     pub onRead: drflac_read_proc,
+    #[doc = " The function to call when the current read position needs to be moved."]
     pub onSeek: drflac_seek_proc,
+    #[doc = " The function to call when the current read position needs to be retrieved."]
     pub onTell: drflac_tell_proc,
+    #[doc = " The user data to pass around to onRead and onSeek."]
     pub pUserData: *mut cty::c_void,
+    #[doc = "The number of unaligned bytes in the L2 cache. This will always be 0 until the end of the stream is hit. At the end of the\nstream there will be a number of bytes that don't cleanly fit in an L1 cache line, so we use this variable to know whether\nor not the bistreamer needs to run on a slower path to read those last bytes. This will never be more than sizeof(drflac_cache_t)."]
     pub unalignedByteCount: usize,
+    #[doc = " The content of the unaligned bytes."]
     pub unalignedCache: drflac_cache_t,
+    #[doc = " The index of the next valid cache line in the \"L2\" cache."]
     pub nextL2Line: drflac_uint32,
+    #[doc = " The number of bits that have been consumed by the cache. This is used to determine how many valid bits are remaining."]
     pub consumedBits: drflac_uint32,
+    #[doc = "The cached data which was most recently read from the client. There are two levels of cache. Data flows as such:\nClient -> L2 -> L1. The L2 -> L1 movement is aligned and runs on a fast path in just a few instructions."]
     pub cacheL2: [drflac_cache_t; 1024usize],
     pub cache: drflac_cache_t,
+    #[doc = "CRC-16. This is updated whenever bits are read from the bit stream. Manually set this to 0 to reset the CRC. For FLAC, this\nis reset to 0 at the beginning of each frame."]
     pub crc16: drflac_uint16,
+    #[doc = " A cache for optimizing CRC calculations. This is filled when when the L1 cache is reloaded."]
     pub crc16Cache: drflac_cache_t,
+    #[doc = " The number of bytes to ignore when updating the CRC-16 from the CRC-16 cache."]
     pub crc16CacheIgnoredBytes: drflac_uint32,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_bs"][::core::mem::size_of::<drflac_bs>() - 4144usize];
-    ["Alignment of drflac_bs"][::core::mem::align_of::<drflac_bs>() - 4usize];
-    ["Offset of field: drflac_bs::onRead"][::core::mem::offset_of!(drflac_bs, onRead) - 0usize];
-    ["Offset of field: drflac_bs::onSeek"][::core::mem::offset_of!(drflac_bs, onSeek) - 4usize];
-    ["Offset of field: drflac_bs::onTell"][::core::mem::offset_of!(drflac_bs, onTell) - 8usize];
-    ["Offset of field: drflac_bs::pUserData"]
-        [::core::mem::offset_of!(drflac_bs, pUserData) - 12usize];
-    ["Offset of field: drflac_bs::unalignedByteCount"]
-        [::core::mem::offset_of!(drflac_bs, unalignedByteCount) - 16usize];
-    ["Offset of field: drflac_bs::unalignedCache"]
-        [::core::mem::offset_of!(drflac_bs, unalignedCache) - 20usize];
-    ["Offset of field: drflac_bs::nextL2Line"]
-        [::core::mem::offset_of!(drflac_bs, nextL2Line) - 24usize];
-    ["Offset of field: drflac_bs::consumedBits"]
-        [::core::mem::offset_of!(drflac_bs, consumedBits) - 28usize];
-    ["Offset of field: drflac_bs::cacheL2"][::core::mem::offset_of!(drflac_bs, cacheL2) - 32usize];
-    ["Offset of field: drflac_bs::cache"][::core::mem::offset_of!(drflac_bs, cache) - 4128usize];
-    ["Offset of field: drflac_bs::crc16"][::core::mem::offset_of!(drflac_bs, crc16) - 4132usize];
-    ["Offset of field: drflac_bs::crc16Cache"]
-        [::core::mem::offset_of!(drflac_bs, crc16Cache) - 4136usize];
-    ["Offset of field: drflac_bs::crc16CacheIgnoredBytes"]
-        [::core::mem::offset_of!(drflac_bs, crc16CacheIgnoredBytes) - 4140usize];
+    ["Size of struct_drflac_bs"][::core::mem::size_of::<struct_drflac_bs>() - 4144usize];
+    ["Alignment of struct_drflac_bs"][::core::mem::align_of::<struct_drflac_bs>() - 4usize];
+    ["Offset of field: struct_drflac_bs::onRead"]
+        [::core::mem::offset_of!(struct_drflac_bs, onRead) - 0usize];
+    ["Offset of field: struct_drflac_bs::onSeek"]
+        [::core::mem::offset_of!(struct_drflac_bs, onSeek) - 4usize];
+    ["Offset of field: struct_drflac_bs::onTell"]
+        [::core::mem::offset_of!(struct_drflac_bs, onTell) - 8usize];
+    ["Offset of field: struct_drflac_bs::pUserData"]
+        [::core::mem::offset_of!(struct_drflac_bs, pUserData) - 12usize];
+    ["Offset of field: struct_drflac_bs::unalignedByteCount"]
+        [::core::mem::offset_of!(struct_drflac_bs, unalignedByteCount) - 16usize];
+    ["Offset of field: struct_drflac_bs::unalignedCache"]
+        [::core::mem::offset_of!(struct_drflac_bs, unalignedCache) - 20usize];
+    ["Offset of field: struct_drflac_bs::nextL2Line"]
+        [::core::mem::offset_of!(struct_drflac_bs, nextL2Line) - 24usize];
+    ["Offset of field: struct_drflac_bs::consumedBits"]
+        [::core::mem::offset_of!(struct_drflac_bs, consumedBits) - 28usize];
+    ["Offset of field: struct_drflac_bs::cacheL2"]
+        [::core::mem::offset_of!(struct_drflac_bs, cacheL2) - 32usize];
+    ["Offset of field: struct_drflac_bs::cache"]
+        [::core::mem::offset_of!(struct_drflac_bs, cache) - 4128usize];
+    ["Offset of field: struct_drflac_bs::crc16"]
+        [::core::mem::offset_of!(struct_drflac_bs, crc16) - 4132usize];
+    ["Offset of field: struct_drflac_bs::crc16Cache"]
+        [::core::mem::offset_of!(struct_drflac_bs, crc16Cache) - 4136usize];
+    ["Offset of field: struct_drflac_bs::crc16CacheIgnoredBytes"]
+        [::core::mem::offset_of!(struct_drflac_bs, crc16CacheIgnoredBytes) - 4140usize];
 };
+#[doc = " Structure for internal use. Used for bit streaming."]
+pub type drflac_bs = struct_drflac_bs;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_subframe {
+pub struct struct_drflac_subframe {
+    #[doc = " The type of the subframe: SUBFRAME_CONSTANT, SUBFRAME_VERBATIM, SUBFRAME_FIXED or SUBFRAME_LPC."]
     pub subframeType: drflac_uint8,
+    #[doc = " The number of wasted bits per sample as specified by the sub-frame header."]
     pub wastedBitsPerSample: drflac_uint8,
+    #[doc = " The order to use for the prediction stage for SUBFRAME_FIXED and SUBFRAME_LPC."]
     pub lpcOrder: drflac_uint8,
+    #[doc = " A pointer to the buffer containing the decoded samples in the subframe. This pointer is an offset from drflac::pExtraData."]
     pub pSamplesS32: *mut drflac_int32,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_subframe"][::core::mem::size_of::<drflac_subframe>() - 8usize];
-    ["Alignment of drflac_subframe"][::core::mem::align_of::<drflac_subframe>() - 4usize];
-    ["Offset of field: drflac_subframe::subframeType"]
-        [::core::mem::offset_of!(drflac_subframe, subframeType) - 0usize];
-    ["Offset of field: drflac_subframe::wastedBitsPerSample"]
-        [::core::mem::offset_of!(drflac_subframe, wastedBitsPerSample) - 1usize];
-    ["Offset of field: drflac_subframe::lpcOrder"]
-        [::core::mem::offset_of!(drflac_subframe, lpcOrder) - 2usize];
-    ["Offset of field: drflac_subframe::pSamplesS32"]
-        [::core::mem::offset_of!(drflac_subframe, pSamplesS32) - 4usize];
+    ["Size of struct_drflac_subframe"][::core::mem::size_of::<struct_drflac_subframe>() - 8usize];
+    ["Alignment of struct_drflac_subframe"]
+        [::core::mem::align_of::<struct_drflac_subframe>() - 4usize];
+    ["Offset of field: struct_drflac_subframe::subframeType"]
+        [::core::mem::offset_of!(struct_drflac_subframe, subframeType) - 0usize];
+    ["Offset of field: struct_drflac_subframe::wastedBitsPerSample"]
+        [::core::mem::offset_of!(struct_drflac_subframe, wastedBitsPerSample) - 1usize];
+    ["Offset of field: struct_drflac_subframe::lpcOrder"]
+        [::core::mem::offset_of!(struct_drflac_subframe, lpcOrder) - 2usize];
+    ["Offset of field: struct_drflac_subframe::pSamplesS32"]
+        [::core::mem::offset_of!(struct_drflac_subframe, pSamplesS32) - 4usize];
 };
+pub type drflac_subframe = struct_drflac_subframe;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_frame_header {
+pub struct struct_drflac_frame_header {
+    #[doc = "If the stream uses variable block sizes, this will be set to the index of the first PCM frame. If fixed block sizes are used, this will\nalways be set to 0. This is 64-bit because the decoded PCM frame number will be 36 bits."]
     pub pcmFrameNumber: drflac_uint64,
+    #[doc = "If the stream uses fixed block sizes, this will be set to the frame number. If variable block sizes are used, this will always be 0. This\nis 32-bit because in fixed block sizes, the maximum frame number will be 31 bits."]
     pub flacFrameNumber: drflac_uint32,
+    #[doc = " The sample rate of this frame."]
     pub sampleRate: drflac_uint32,
+    #[doc = " The number of PCM frames in each sub-frame within this frame."]
     pub blockSizeInPCMFrames: drflac_uint16,
+    #[doc = "The channel assignment of this frame. This is not always set to the channel count. If interchannel decorrelation is being used this\nwill be set to DRFLAC_CHANNEL_ASSIGNMENT_LEFT_SIDE, DRFLAC_CHANNEL_ASSIGNMENT_RIGHT_SIDE or DRFLAC_CHANNEL_ASSIGNMENT_MID_SIDE."]
     pub channelAssignment: drflac_uint8,
+    #[doc = " The number of bits per sample within this frame."]
     pub bitsPerSample: drflac_uint8,
+    #[doc = " The frame's CRC."]
     pub crc8: drflac_uint8,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_frame_header"][::core::mem::size_of::<drflac_frame_header>() - 24usize];
-    ["Alignment of drflac_frame_header"][::core::mem::align_of::<drflac_frame_header>() - 8usize];
-    ["Offset of field: drflac_frame_header::pcmFrameNumber"]
-        [::core::mem::offset_of!(drflac_frame_header, pcmFrameNumber) - 0usize];
-    ["Offset of field: drflac_frame_header::flacFrameNumber"]
-        [::core::mem::offset_of!(drflac_frame_header, flacFrameNumber) - 8usize];
-    ["Offset of field: drflac_frame_header::sampleRate"]
-        [::core::mem::offset_of!(drflac_frame_header, sampleRate) - 12usize];
-    ["Offset of field: drflac_frame_header::blockSizeInPCMFrames"]
-        [::core::mem::offset_of!(drflac_frame_header, blockSizeInPCMFrames) - 16usize];
-    ["Offset of field: drflac_frame_header::channelAssignment"]
-        [::core::mem::offset_of!(drflac_frame_header, channelAssignment) - 18usize];
-    ["Offset of field: drflac_frame_header::bitsPerSample"]
-        [::core::mem::offset_of!(drflac_frame_header, bitsPerSample) - 19usize];
-    ["Offset of field: drflac_frame_header::crc8"]
-        [::core::mem::offset_of!(drflac_frame_header, crc8) - 20usize];
+    ["Size of struct_drflac_frame_header"]
+        [::core::mem::size_of::<struct_drflac_frame_header>() - 24usize];
+    ["Alignment of struct_drflac_frame_header"]
+        [::core::mem::align_of::<struct_drflac_frame_header>() - 8usize];
+    ["Offset of field: struct_drflac_frame_header::pcmFrameNumber"]
+        [::core::mem::offset_of!(struct_drflac_frame_header, pcmFrameNumber) - 0usize];
+    ["Offset of field: struct_drflac_frame_header::flacFrameNumber"]
+        [::core::mem::offset_of!(struct_drflac_frame_header, flacFrameNumber) - 8usize];
+    ["Offset of field: struct_drflac_frame_header::sampleRate"]
+        [::core::mem::offset_of!(struct_drflac_frame_header, sampleRate) - 12usize];
+    ["Offset of field: struct_drflac_frame_header::blockSizeInPCMFrames"]
+        [::core::mem::offset_of!(struct_drflac_frame_header, blockSizeInPCMFrames) - 16usize];
+    ["Offset of field: struct_drflac_frame_header::channelAssignment"]
+        [::core::mem::offset_of!(struct_drflac_frame_header, channelAssignment) - 18usize];
+    ["Offset of field: struct_drflac_frame_header::bitsPerSample"]
+        [::core::mem::offset_of!(struct_drflac_frame_header, bitsPerSample) - 19usize];
+    ["Offset of field: struct_drflac_frame_header::crc8"]
+        [::core::mem::offset_of!(struct_drflac_frame_header, crc8) - 20usize];
 };
+pub type drflac_frame_header = struct_drflac_frame_header;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_frame {
+pub struct struct_drflac_frame {
+    #[doc = " The header."]
     pub header: drflac_frame_header,
+    #[doc = "The number of PCM frames left to be read in this FLAC frame. This is initially set to the block size. As PCM frames are read,\nthis will be decremented. When it reaches 0, the decoder will see this frame as fully consumed and load the next frame."]
     pub pcmFramesRemaining: drflac_uint32,
+    #[doc = " The list of sub-frames within the frame. There is one sub-frame for each channel, and there's a maximum of 8 channels."]
     pub subframes: [drflac_subframe; 8usize],
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_frame"][::core::mem::size_of::<drflac_frame>() - 96usize];
-    ["Alignment of drflac_frame"][::core::mem::align_of::<drflac_frame>() - 8usize];
-    ["Offset of field: drflac_frame::header"]
-        [::core::mem::offset_of!(drflac_frame, header) - 0usize];
-    ["Offset of field: drflac_frame::pcmFramesRemaining"]
-        [::core::mem::offset_of!(drflac_frame, pcmFramesRemaining) - 24usize];
-    ["Offset of field: drflac_frame::subframes"]
-        [::core::mem::offset_of!(drflac_frame, subframes) - 28usize];
+    ["Size of struct_drflac_frame"][::core::mem::size_of::<struct_drflac_frame>() - 96usize];
+    ["Alignment of struct_drflac_frame"][::core::mem::align_of::<struct_drflac_frame>() - 8usize];
+    ["Offset of field: struct_drflac_frame::header"]
+        [::core::mem::offset_of!(struct_drflac_frame, header) - 0usize];
+    ["Offset of field: struct_drflac_frame::pcmFramesRemaining"]
+        [::core::mem::offset_of!(struct_drflac_frame, pcmFramesRemaining) - 24usize];
+    ["Offset of field: struct_drflac_frame::subframes"]
+        [::core::mem::offset_of!(struct_drflac_frame, subframes) - 28usize];
 };
+pub type drflac_frame = struct_drflac_frame;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac {
+pub struct struct_drflac {
+    #[doc = " The function to call when a metadata block is read."]
     pub onMeta: drflac_meta_proc,
+    #[doc = " The user data posted to the metadata callback function."]
     pub pUserDataMD: *mut cty::c_void,
+    #[doc = " Memory allocation callbacks."]
     pub allocationCallbacks: drflac_allocation_callbacks,
+    #[doc = " The sample rate. Will be set to something like 44100."]
     pub sampleRate: drflac_uint32,
+    #[doc = "The number of channels. This will be set to 1 for monaural streams, 2 for stereo, etc. Maximum 8. This is set based on the\nvalue specified in the STREAMINFO block."]
     pub channels: drflac_uint8,
+    #[doc = " The bits per sample. Will be set to something like 16, 24, etc."]
     pub bitsPerSample: drflac_uint8,
+    #[doc = " The maximum block size, in samples. This number represents the number of samples in each channel (not combined)."]
     pub maxBlockSizeInPCMFrames: drflac_uint16,
+    #[doc = "The total number of PCM Frames making up the stream. Can be 0 in which case it's still a valid stream, but just means\nthe total PCM frame count is unknown. Likely the case with streams like internet radio."]
     pub totalPCMFrameCount: drflac_uint64,
+    #[doc = " The container type. This is set based on whether or not the decoder was opened from a native or Ogg stream."]
     pub container: drflac_container,
+    #[doc = " The number of seekpoints in the seektable."]
     pub seekpointCount: drflac_uint32,
+    #[doc = " Information about the frame the decoder is currently sitting on."]
     pub currentFLACFrame: drflac_frame,
+    #[doc = " The index of the PCM frame the decoder is currently sitting on. This is only used for seeking."]
     pub currentPCMFrame: drflac_uint64,
+    #[doc = " The position of the first FLAC frame in the stream. This is only ever used for seeking."]
     pub firstFLACFramePosInBytes: drflac_uint64,
+    #[doc = " A hack to avoid a malloc() when opening a decoder with drflac_open_memory()."]
     pub memoryStream: drflac__memory_stream,
+    #[doc = " A pointer to the decoded sample data. This is an offset of pExtraData."]
     pub pDecodedSamples: *mut drflac_int32,
+    #[doc = " A pointer to the seek table. This is an offset of pExtraData, or NULL if there is no seek table."]
     pub pSeekpoints: *mut drflac_seekpoint,
+    #[doc = " Internal use only. Only used with Ogg containers. Points to a drflac_oggbs object. This is an offset of pExtraData."]
     pub _oggbs: *mut cty::c_void,
     pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 1usize]>,
+    #[doc = " The bit streamer. The raw FLAC data is fed through this object."]
     pub bs: drflac_bs,
+    #[doc = " Variable length extra data. We attach this to the end of the object so we can avoid unnecessary mallocs."]
     pub pExtraData: [drflac_uint8; 1usize],
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac"][::core::mem::size_of::<drflac>() - 4336usize];
-    ["Alignment of drflac"][::core::mem::align_of::<drflac>() - 8usize];
-    ["Offset of field: drflac::onMeta"][::core::mem::offset_of!(drflac, onMeta) - 0usize];
-    ["Offset of field: drflac::pUserDataMD"][::core::mem::offset_of!(drflac, pUserDataMD) - 4usize];
-    ["Offset of field: drflac::allocationCallbacks"]
-        [::core::mem::offset_of!(drflac, allocationCallbacks) - 8usize];
-    ["Offset of field: drflac::sampleRate"][::core::mem::offset_of!(drflac, sampleRate) - 24usize];
-    ["Offset of field: drflac::channels"][::core::mem::offset_of!(drflac, channels) - 28usize];
-    ["Offset of field: drflac::bitsPerSample"]
-        [::core::mem::offset_of!(drflac, bitsPerSample) - 29usize];
-    ["Offset of field: drflac::maxBlockSizeInPCMFrames"]
-        [::core::mem::offset_of!(drflac, maxBlockSizeInPCMFrames) - 30usize];
-    ["Offset of field: drflac::totalPCMFrameCount"]
-        [::core::mem::offset_of!(drflac, totalPCMFrameCount) - 32usize];
-    ["Offset of field: drflac::container"][::core::mem::offset_of!(drflac, container) - 40usize];
-    ["Offset of field: drflac::seekpointCount"]
-        [::core::mem::offset_of!(drflac, seekpointCount) - 44usize];
-    ["Offset of field: drflac::currentFLACFrame"]
-        [::core::mem::offset_of!(drflac, currentFLACFrame) - 48usize];
-    ["Offset of field: drflac::currentPCMFrame"]
-        [::core::mem::offset_of!(drflac, currentPCMFrame) - 144usize];
-    ["Offset of field: drflac::firstFLACFramePosInBytes"]
-        [::core::mem::offset_of!(drflac, firstFLACFramePosInBytes) - 152usize];
-    ["Offset of field: drflac::memoryStream"]
-        [::core::mem::offset_of!(drflac, memoryStream) - 160usize];
-    ["Offset of field: drflac::pDecodedSamples"]
-        [::core::mem::offset_of!(drflac, pDecodedSamples) - 172usize];
-    ["Offset of field: drflac::pSeekpoints"]
-        [::core::mem::offset_of!(drflac, pSeekpoints) - 176usize];
-    ["Offset of field: drflac::_oggbs"][::core::mem::offset_of!(drflac, _oggbs) - 180usize];
-    ["Offset of field: drflac::bs"][::core::mem::offset_of!(drflac, bs) - 188usize];
-    ["Offset of field: drflac::pExtraData"]
-        [::core::mem::offset_of!(drflac, pExtraData) - 4332usize];
+    ["Size of struct_drflac"][::core::mem::size_of::<struct_drflac>() - 4336usize];
+    ["Alignment of struct_drflac"][::core::mem::align_of::<struct_drflac>() - 8usize];
+    ["Offset of field: struct_drflac::onMeta"]
+        [::core::mem::offset_of!(struct_drflac, onMeta) - 0usize];
+    ["Offset of field: struct_drflac::pUserDataMD"]
+        [::core::mem::offset_of!(struct_drflac, pUserDataMD) - 4usize];
+    ["Offset of field: struct_drflac::allocationCallbacks"]
+        [::core::mem::offset_of!(struct_drflac, allocationCallbacks) - 8usize];
+    ["Offset of field: struct_drflac::sampleRate"]
+        [::core::mem::offset_of!(struct_drflac, sampleRate) - 24usize];
+    ["Offset of field: struct_drflac::channels"]
+        [::core::mem::offset_of!(struct_drflac, channels) - 28usize];
+    ["Offset of field: struct_drflac::bitsPerSample"]
+        [::core::mem::offset_of!(struct_drflac, bitsPerSample) - 29usize];
+    ["Offset of field: struct_drflac::maxBlockSizeInPCMFrames"]
+        [::core::mem::offset_of!(struct_drflac, maxBlockSizeInPCMFrames) - 30usize];
+    ["Offset of field: struct_drflac::totalPCMFrameCount"]
+        [::core::mem::offset_of!(struct_drflac, totalPCMFrameCount) - 32usize];
+    ["Offset of field: struct_drflac::container"]
+        [::core::mem::offset_of!(struct_drflac, container) - 40usize];
+    ["Offset of field: struct_drflac::seekpointCount"]
+        [::core::mem::offset_of!(struct_drflac, seekpointCount) - 44usize];
+    ["Offset of field: struct_drflac::currentFLACFrame"]
+        [::core::mem::offset_of!(struct_drflac, currentFLACFrame) - 48usize];
+    ["Offset of field: struct_drflac::currentPCMFrame"]
+        [::core::mem::offset_of!(struct_drflac, currentPCMFrame) - 144usize];
+    ["Offset of field: struct_drflac::firstFLACFramePosInBytes"]
+        [::core::mem::offset_of!(struct_drflac, firstFLACFramePosInBytes) - 152usize];
+    ["Offset of field: struct_drflac::memoryStream"]
+        [::core::mem::offset_of!(struct_drflac, memoryStream) - 160usize];
+    ["Offset of field: struct_drflac::pDecodedSamples"]
+        [::core::mem::offset_of!(struct_drflac, pDecodedSamples) - 172usize];
+    ["Offset of field: struct_drflac::pSeekpoints"]
+        [::core::mem::offset_of!(struct_drflac, pSeekpoints) - 176usize];
+    ["Offset of field: struct_drflac::_oggbs"]
+        [::core::mem::offset_of!(struct_drflac, _oggbs) - 180usize];
+    ["Offset of field: struct_drflac::bs"][::core::mem::offset_of!(struct_drflac, bs) - 188usize];
+    ["Offset of field: struct_drflac::pExtraData"]
+        [::core::mem::offset_of!(struct_drflac, pExtraData) - 4332usize];
 };
-impl drflac {
+impl struct_drflac {
     #[inline]
     pub fn _noSeekTableSeek(&self) -> drflac_bool32 {
         unsafe { ::core::mem::transmute(self._bitfield_1.get(0usize, 1u8) as u32) }
@@ -871,7 +1005,9 @@ impl drflac {
         __bindgen_bitfield_unit
     }
 }
+pub type drflac = struct_drflac;
 unsafe extern "C" {
+    #[doc = "Opens a FLAC decoder.\n\n\nParameters\n----------\nonRead (in)\nThe function to call when data needs to be read from the client.\n\nonSeek (in)\nThe function to call when the read position of the client data needs to move.\n\npUserData (in, optional)\nA pointer to application defined data that will be passed to onRead and onSeek.\n\npAllocationCallbacks (in, optional)\nA pointer to application defined callbacks for managing memory allocations.\n\n\nReturn Value\n------------\nReturns a pointer to an object representing the decoder.\n\n\nRemarks\n-------\nClose the decoder with `drflac_close()`.\n\n`pAllocationCallbacks` can be NULL in which case it will use `DRFLAC_MALLOC`, `DRFLAC_REALLOC` and `DRFLAC_FREE`.\n\nThis function will automatically detect whether or not you are attempting to open a native or Ogg encapsulated FLAC, both of which should work seamlessly\nwithout any manual intervention. Ogg encapsulation also works with multiplexed streams which basically means it can play FLAC encoded audio tracks in videos.\n\nThis is the lowest level function for opening a FLAC stream. You can also use `drflac_open_file()` and `drflac_open_memory()` to open the stream from a file or\nfrom a block of memory respectively.\n\nThe STREAMINFO block must be present for this to succeed. Use `drflac_open_relaxed()` to open a FLAC stream where the header may not be present.\n\nUse `drflac_open_with_metadata()` if you need access to metadata.\n\n\nSeek Also\n---------\ndrflac_open_file()\ndrflac_open_memory()\ndrflac_open_with_metadata()\ndrflac_close()"]
     pub fn drflac_open(
         onRead: drflac_read_proc,
         onSeek: drflac_seek_proc,
@@ -881,6 +1017,7 @@ unsafe extern "C" {
     ) -> *mut drflac;
 }
 unsafe extern "C" {
+    #[doc = "Opens a FLAC stream with relaxed validation of the header block.\n\n\nParameters\n----------\nonRead (in)\nThe function to call when data needs to be read from the client.\n\nonSeek (in)\nThe function to call when the read position of the client data needs to move.\n\ncontainer (in)\nWhether or not the FLAC stream is encapsulated using standard FLAC encapsulation or Ogg encapsulation.\n\npUserData (in, optional)\nA pointer to application defined data that will be passed to onRead and onSeek.\n\npAllocationCallbacks (in, optional)\nA pointer to application defined callbacks for managing memory allocations.\n\n\nReturn Value\n------------\nA pointer to an object representing the decoder.\n\n\nRemarks\n-------\nThe same as drflac_open(), except attempts to open the stream even when a header block is not present.\n\nBecause the header is not necessarily available, the caller must explicitly define the container (Native or Ogg). Do not set this to `drflac_container_unknown`\nas that is for internal use only.\n\nOpening in relaxed mode will continue reading data from onRead until it finds a valid frame. If a frame is never found it will continue forever. To abort,\nforce your `onRead` callback to return 0, which dr_flac will use as an indicator that the end of the stream was found.\n\nUse `drflac_open_with_metadata_relaxed()` if you need access to metadata."]
     pub fn drflac_open_relaxed(
         onRead: drflac_read_proc,
         onSeek: drflac_seek_proc,
@@ -891,6 +1028,7 @@ unsafe extern "C" {
     ) -> *mut drflac;
 }
 unsafe extern "C" {
+    #[doc = "Opens a FLAC decoder and notifies the caller of the metadata chunks (album art, etc.).\n\n\nParameters\n----------\nonRead (in)\nThe function to call when data needs to be read from the client.\n\nonSeek (in)\nThe function to call when the read position of the client data needs to move.\n\nonMeta (in)\nThe function to call for every metadata block.\n\npUserData (in, optional)\nA pointer to application defined data that will be passed to onRead, onSeek and onMeta.\n\npAllocationCallbacks (in, optional)\nA pointer to application defined callbacks for managing memory allocations.\n\n\nReturn Value\n------------\nA pointer to an object representing the decoder.\n\n\nRemarks\n-------\nClose the decoder with `drflac_close()`.\n\n`pAllocationCallbacks` can be NULL in which case it will use `DRFLAC_MALLOC`, `DRFLAC_REALLOC` and `DRFLAC_FREE`.\n\nThis is slower than `drflac_open()`, so avoid this one if you don't need metadata. Internally, this will allocate and free memory on the heap for every\nmetadata block except for STREAMINFO and PADDING blocks.\n\nThe caller is notified of the metadata via the `onMeta` callback. All metadata blocks will be handled before the function returns. This callback takes a\npointer to a `drflac_metadata` object which is a union containing the data of all relevant metadata blocks. Use the `type` member to discriminate against\nthe different metadata types.\n\nThe STREAMINFO block must be present for this to succeed. Use `drflac_open_with_metadata_relaxed()` to open a FLAC stream where the header may not be present.\n\nNote that this will behave inconsistently with `drflac_open()` if the stream is an Ogg encapsulated stream and a metadata block is corrupted. This is due to\nthe way the Ogg stream recovers from corrupted pages. When `drflac_open_with_metadata()` is being used, the open routine will try to read the contents of the\nmetadata block, whereas `drflac_open()` will simply seek past it (for the sake of efficiency). This inconsistency can result in different samples being\nreturned depending on whether or not the stream is being opened with metadata.\n\n\nSeek Also\n---------\ndrflac_open_file_with_metadata()\ndrflac_open_memory_with_metadata()\ndrflac_open()\ndrflac_close()"]
     pub fn drflac_open_with_metadata(
         onRead: drflac_read_proc,
         onSeek: drflac_seek_proc,
@@ -901,6 +1039,7 @@ unsafe extern "C" {
     ) -> *mut drflac;
 }
 unsafe extern "C" {
+    #[doc = "The same as drflac_open_with_metadata(), except attempts to open the stream even when a header block is not present.\n\nSee Also\n--------\ndrflac_open_with_metadata()\ndrflac_open_relaxed()"]
     pub fn drflac_open_with_metadata_relaxed(
         onRead: drflac_read_proc,
         onSeek: drflac_seek_proc,
@@ -912,9 +1051,11 @@ unsafe extern "C" {
     ) -> *mut drflac;
 }
 unsafe extern "C" {
+    #[doc = "Closes the given FLAC decoder.\n\n\nParameters\n----------\npFlac (in)\nThe decoder to close.\n\n\nRemarks\n-------\nThis will destroy the decoder object.\n\n\nSee Also\n--------\ndrflac_open()\ndrflac_open_with_metadata()\ndrflac_open_file()\ndrflac_open_file_w()\ndrflac_open_file_with_metadata()\ndrflac_open_file_with_metadata_w()\ndrflac_open_memory()\ndrflac_open_memory_with_metadata()"]
     pub fn drflac_close(pFlac: *mut drflac);
 }
 unsafe extern "C" {
+    #[doc = "Reads sample data from the given FLAC decoder, output as interleaved signed 32-bit PCM.\n\n\nParameters\n----------\npFlac (in)\nThe decoder.\n\nframesToRead (in)\nThe number of PCM frames to read.\n\npBufferOut (out, optional)\nA pointer to the buffer that will receive the decoded samples.\n\n\nReturn Value\n------------\nReturns the number of PCM frames actually read. If the return value is less than `framesToRead` it has reached the end.\n\n\nRemarks\n-------\npBufferOut can be null, in which case the call will act as a seek, and the return value will be the number of frames seeked."]
     pub fn drflac_read_pcm_frames_s32(
         pFlac: *mut drflac,
         framesToRead: drflac_uint64,
@@ -922,6 +1063,7 @@ unsafe extern "C" {
     ) -> drflac_uint64;
 }
 unsafe extern "C" {
+    #[doc = "Reads sample data from the given FLAC decoder, output as interleaved signed 16-bit PCM.\n\n\nParameters\n----------\npFlac (in)\nThe decoder.\n\nframesToRead (in)\nThe number of PCM frames to read.\n\npBufferOut (out, optional)\nA pointer to the buffer that will receive the decoded samples.\n\n\nReturn Value\n------------\nReturns the number of PCM frames actually read. If the return value is less than `framesToRead` it has reached the end.\n\n\nRemarks\n-------\npBufferOut can be null, in which case the call will act as a seek, and the return value will be the number of frames seeked.\n\nNote that this is lossy for streams where the bits per sample is larger than 16."]
     pub fn drflac_read_pcm_frames_s16(
         pFlac: *mut drflac,
         framesToRead: drflac_uint64,
@@ -929,6 +1071,7 @@ unsafe extern "C" {
     ) -> drflac_uint64;
 }
 unsafe extern "C" {
+    #[doc = "Reads sample data from the given FLAC decoder, output as interleaved 32-bit floating point PCM.\n\n\nParameters\n----------\npFlac (in)\nThe decoder.\n\nframesToRead (in)\nThe number of PCM frames to read.\n\npBufferOut (out, optional)\nA pointer to the buffer that will receive the decoded samples.\n\n\nReturn Value\n------------\nReturns the number of PCM frames actually read. If the return value is less than `framesToRead` it has reached the end.\n\n\nRemarks\n-------\npBufferOut can be null, in which case the call will act as a seek, and the return value will be the number of frames seeked.\n\nNote that this should be considered lossy due to the nature of floating point numbers not being able to exactly represent every possible number."]
     pub fn drflac_read_pcm_frames_f32(
         pFlac: *mut drflac,
         framesToRead: drflac_uint64,
@@ -936,12 +1079,14 @@ unsafe extern "C" {
     ) -> drflac_uint64;
 }
 unsafe extern "C" {
+    #[doc = "Seeks to the PCM frame at the given index.\n\n\nParameters\n----------\npFlac (in)\nThe decoder.\n\npcmFrameIndex (in)\nThe index of the PCM frame to seek to. See notes below.\n\n\nReturn Value\n-------------\n`DRFLAC_TRUE` if successful; `DRFLAC_FALSE` otherwise."]
     pub fn drflac_seek_to_pcm_frame(
         pFlac: *mut drflac,
         pcmFrameIndex: drflac_uint64,
     ) -> drflac_bool32;
 }
 unsafe extern "C" {
+    #[doc = "Opens a FLAC decoder from the file at the given path.\n\n\nParameters\n----------\npFileName (in)\nThe path of the file to open, either absolute or relative to the current directory.\n\npAllocationCallbacks (in, optional)\nA pointer to application defined callbacks for managing memory allocations.\n\n\nReturn Value\n------------\nA pointer to an object representing the decoder.\n\n\nRemarks\n-------\nClose the decoder with drflac_close().\n\n\nRemarks\n-------\nThis will hold a handle to the file until the decoder is closed with drflac_close(). Some platforms will restrict the number of files a process can have open\nat any given time, so keep this mind if you have many decoders open at the same time.\n\n\nSee Also\n--------\ndrflac_open_file_with_metadata()\ndrflac_open()\ndrflac_close()"]
     pub fn drflac_open_file(
         pFileName: *const cty::c_char,
         pAllocationCallbacks: *const drflac_allocation_callbacks,
@@ -954,6 +1099,7 @@ unsafe extern "C" {
     ) -> *mut drflac;
 }
 unsafe extern "C" {
+    #[doc = "Opens a FLAC decoder from the file at the given path and notifies the caller of the metadata chunks (album art, etc.)\n\n\nParameters\n----------\npFileName (in)\nThe path of the file to open, either absolute or relative to the current directory.\n\npAllocationCallbacks (in, optional)\nA pointer to application defined callbacks for managing memory allocations.\n\nonMeta (in)\nThe callback to fire for each metadata block.\n\npUserData (in)\nA pointer to the user data to pass to the metadata callback.\n\npAllocationCallbacks (in)\nA pointer to application defined callbacks for managing memory allocations.\n\n\nRemarks\n-------\nLook at the documentation for drflac_open_with_metadata() for more information on how metadata is handled.\n\n\nSee Also\n--------\ndrflac_open_with_metadata()\ndrflac_open()\ndrflac_close()"]
     pub fn drflac_open_file_with_metadata(
         pFileName: *const cty::c_char,
         onMeta: drflac_meta_proc,
@@ -970,6 +1116,7 @@ unsafe extern "C" {
     ) -> *mut drflac;
 }
 unsafe extern "C" {
+    #[doc = "Opens a FLAC decoder from a pre-allocated block of memory\n\n\nParameters\n----------\npData (in)\nA pointer to the raw encoded FLAC data.\n\ndataSize (in)\nThe size in bytes of `data`.\n\npAllocationCallbacks (in)\nA pointer to application defined callbacks for managing memory allocations.\n\n\nReturn Value\n------------\nA pointer to an object representing the decoder.\n\n\nRemarks\n-------\nThis does not create a copy of the data. It is up to the application to ensure the buffer remains valid for the lifetime of the decoder.\n\n\nSee Also\n--------\ndrflac_open()\ndrflac_close()"]
     pub fn drflac_open_memory(
         pData: *const cty::c_void,
         dataSize: usize,
@@ -977,6 +1124,7 @@ unsafe extern "C" {
     ) -> *mut drflac;
 }
 unsafe extern "C" {
+    #[doc = "Opens a FLAC decoder from a pre-allocated block of memory and notifies the caller of the metadata chunks (album art, etc.)\n\n\nParameters\n----------\npData (in)\nA pointer to the raw encoded FLAC data.\n\ndataSize (in)\nThe size in bytes of `data`.\n\nonMeta (in)\nThe callback to fire for each metadata block.\n\npUserData (in)\nA pointer to the user data to pass to the metadata callback.\n\npAllocationCallbacks (in)\nA pointer to application defined callbacks for managing memory allocations.\n\n\nRemarks\n-------\nLook at the documentation for drflac_open_with_metadata() for more information on how metadata is handled.\n\n\nSee Also\n-------\ndrflac_open_with_metadata()\ndrflac_open()\ndrflac_close()"]
     pub fn drflac_open_memory_with_metadata(
         pData: *const cty::c_void,
         dataSize: usize,
@@ -986,6 +1134,7 @@ unsafe extern "C" {
     ) -> *mut drflac;
 }
 unsafe extern "C" {
+    #[doc = "Opens a FLAC stream from the given callbacks and fully decodes it in a single operation. The return value is a\npointer to the sample data as interleaved signed 32-bit PCM. The returned data must be freed with drflac_free().\n\nYou can pass in custom memory allocation callbacks via the pAllocationCallbacks parameter. This can be NULL in which\ncase it will use DRFLAC_MALLOC, DRFLAC_REALLOC and DRFLAC_FREE.\n\nSometimes a FLAC file won't keep track of the total sample count. In this situation the function will continuously\nread samples into a dynamically sized buffer on the heap until no samples are left.\n\nDo not call this function on a broadcast type of stream (like internet radio streams and whatnot)."]
     pub fn drflac_open_and_read_pcm_frames_s32(
         onRead: drflac_read_proc,
         onSeek: drflac_seek_proc,
@@ -998,6 +1147,7 @@ unsafe extern "C" {
     ) -> *mut drflac_int32;
 }
 unsafe extern "C" {
+    #[doc = " Same as drflac_open_and_read_pcm_frames_s32(), except returns signed 16-bit integer samples."]
     pub fn drflac_open_and_read_pcm_frames_s16(
         onRead: drflac_read_proc,
         onSeek: drflac_seek_proc,
@@ -1010,6 +1160,7 @@ unsafe extern "C" {
     ) -> *mut drflac_int16;
 }
 unsafe extern "C" {
+    #[doc = " Same as drflac_open_and_read_pcm_frames_s32(), except returns 32-bit floating-point samples."]
     pub fn drflac_open_and_read_pcm_frames_f32(
         onRead: drflac_read_proc,
         onSeek: drflac_seek_proc,
@@ -1022,6 +1173,7 @@ unsafe extern "C" {
     ) -> *mut f32;
 }
 unsafe extern "C" {
+    #[doc = " Same as drflac_open_and_read_pcm_frames_s32() except opens the decoder from a file."]
     pub fn drflac_open_file_and_read_pcm_frames_s32(
         filename: *const cty::c_char,
         channels: *mut cty::c_uint,
@@ -1031,6 +1183,7 @@ unsafe extern "C" {
     ) -> *mut drflac_int32;
 }
 unsafe extern "C" {
+    #[doc = " Same as drflac_open_file_and_read_pcm_frames_s32(), except returns signed 16-bit integer samples."]
     pub fn drflac_open_file_and_read_pcm_frames_s16(
         filename: *const cty::c_char,
         channels: *mut cty::c_uint,
@@ -1040,6 +1193,7 @@ unsafe extern "C" {
     ) -> *mut drflac_int16;
 }
 unsafe extern "C" {
+    #[doc = " Same as drflac_open_file_and_read_pcm_frames_s32(), except returns 32-bit floating-point samples."]
     pub fn drflac_open_file_and_read_pcm_frames_f32(
         filename: *const cty::c_char,
         channels: *mut cty::c_uint,
@@ -1049,6 +1203,7 @@ unsafe extern "C" {
     ) -> *mut f32;
 }
 unsafe extern "C" {
+    #[doc = " Same as drflac_open_and_read_pcm_frames_s32() except opens the decoder from a block of memory."]
     pub fn drflac_open_memory_and_read_pcm_frames_s32(
         data: *const cty::c_void,
         dataSize: usize,
@@ -1059,6 +1214,7 @@ unsafe extern "C" {
     ) -> *mut drflac_int32;
 }
 unsafe extern "C" {
+    #[doc = " Same as drflac_open_memory_and_read_pcm_frames_s32(), except returns signed 16-bit integer samples."]
     pub fn drflac_open_memory_and_read_pcm_frames_s16(
         data: *const cty::c_void,
         dataSize: usize,
@@ -1069,6 +1225,7 @@ unsafe extern "C" {
     ) -> *mut drflac_int16;
 }
 unsafe extern "C" {
+    #[doc = " Same as drflac_open_memory_and_read_pcm_frames_s32(), except returns 32-bit floating-point samples."]
     pub fn drflac_open_memory_and_read_pcm_frames_f32(
         data: *const cty::c_void,
         dataSize: usize,
@@ -1079,29 +1236,34 @@ unsafe extern "C" {
     ) -> *mut f32;
 }
 unsafe extern "C" {
+    #[doc = "Frees memory that was allocated internally by dr_flac.\n\nSet pAllocationCallbacks to the same object that was passed to drflac_open_*_and_read_pcm_frames_*(). If you originally passed in NULL, pass in NULL for this."]
     pub fn drflac_free(
         p: *mut cty::c_void,
         pAllocationCallbacks: *const drflac_allocation_callbacks,
     );
 }
+#[doc = " Structure representing an iterator for vorbis comments in a VORBIS_COMMENT metadata block."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_vorbis_comment_iterator {
+pub struct struct_drflac_vorbis_comment_iterator {
     pub countRemaining: drflac_uint32,
     pub pRunningData: *const cty::c_char,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_vorbis_comment_iterator"]
-        [::core::mem::size_of::<drflac_vorbis_comment_iterator>() - 8usize];
-    ["Alignment of drflac_vorbis_comment_iterator"]
-        [::core::mem::align_of::<drflac_vorbis_comment_iterator>() - 4usize];
-    ["Offset of field: drflac_vorbis_comment_iterator::countRemaining"]
-        [::core::mem::offset_of!(drflac_vorbis_comment_iterator, countRemaining) - 0usize];
-    ["Offset of field: drflac_vorbis_comment_iterator::pRunningData"]
-        [::core::mem::offset_of!(drflac_vorbis_comment_iterator, pRunningData) - 4usize];
+    ["Size of struct_drflac_vorbis_comment_iterator"]
+        [::core::mem::size_of::<struct_drflac_vorbis_comment_iterator>() - 8usize];
+    ["Alignment of struct_drflac_vorbis_comment_iterator"]
+        [::core::mem::align_of::<struct_drflac_vorbis_comment_iterator>() - 4usize];
+    ["Offset of field: struct_drflac_vorbis_comment_iterator::countRemaining"]
+        [::core::mem::offset_of!(struct_drflac_vorbis_comment_iterator, countRemaining) - 0usize];
+    ["Offset of field: struct_drflac_vorbis_comment_iterator::pRunningData"]
+        [::core::mem::offset_of!(struct_drflac_vorbis_comment_iterator, pRunningData) - 4usize];
 };
+#[doc = " Structure representing an iterator for vorbis comments in a VORBIS_COMMENT metadata block."]
+pub type drflac_vorbis_comment_iterator = struct_drflac_vorbis_comment_iterator;
 unsafe extern "C" {
+    #[doc = "Initializes a vorbis comment iterator. This can be used for iterating over the vorbis comments in a VORBIS_COMMENT\nmetadata block."]
     pub fn drflac_init_vorbis_comment_iterator(
         pIter: *mut drflac_vorbis_comment_iterator,
         commentCount: drflac_uint32,
@@ -1109,51 +1271,58 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
+    #[doc = "Goes to the next vorbis comment in the given iterator. If null is returned it means there are no more comments. The\nreturned string is NOT null terminated."]
     pub fn drflac_next_vorbis_comment(
         pIter: *mut drflac_vorbis_comment_iterator,
         pCommentLengthOut: *mut drflac_uint32,
     ) -> *const cty::c_char;
 }
+#[doc = " Structure representing an iterator for cuesheet tracks in a CUESHEET metadata block."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_cuesheet_track_iterator {
+pub struct struct_drflac_cuesheet_track_iterator {
     pub countRemaining: drflac_uint32,
     pub pRunningData: *const cty::c_char,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_cuesheet_track_iterator"]
-        [::core::mem::size_of::<drflac_cuesheet_track_iterator>() - 8usize];
-    ["Alignment of drflac_cuesheet_track_iterator"]
-        [::core::mem::align_of::<drflac_cuesheet_track_iterator>() - 4usize];
-    ["Offset of field: drflac_cuesheet_track_iterator::countRemaining"]
-        [::core::mem::offset_of!(drflac_cuesheet_track_iterator, countRemaining) - 0usize];
-    ["Offset of field: drflac_cuesheet_track_iterator::pRunningData"]
-        [::core::mem::offset_of!(drflac_cuesheet_track_iterator, pRunningData) - 4usize];
+    ["Size of struct_drflac_cuesheet_track_iterator"]
+        [::core::mem::size_of::<struct_drflac_cuesheet_track_iterator>() - 8usize];
+    ["Alignment of struct_drflac_cuesheet_track_iterator"]
+        [::core::mem::align_of::<struct_drflac_cuesheet_track_iterator>() - 4usize];
+    ["Offset of field: struct_drflac_cuesheet_track_iterator::countRemaining"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track_iterator, countRemaining) - 0usize];
+    ["Offset of field: struct_drflac_cuesheet_track_iterator::pRunningData"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track_iterator, pRunningData) - 4usize];
 };
+#[doc = " Structure representing an iterator for cuesheet tracks in a CUESHEET metadata block."]
+pub type drflac_cuesheet_track_iterator = struct_drflac_cuesheet_track_iterator;
+#[doc = " The order of members here is important because we map this directly to the raw data within the CUESHEET metadata block."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_cuesheet_track_index {
+pub struct struct_drflac_cuesheet_track_index {
     pub offset: drflac_uint64,
     pub index: drflac_uint8,
     pub reserved: [drflac_uint8; 3usize],
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_cuesheet_track_index"]
-        [::core::mem::size_of::<drflac_cuesheet_track_index>() - 16usize];
-    ["Alignment of drflac_cuesheet_track_index"]
-        [::core::mem::align_of::<drflac_cuesheet_track_index>() - 8usize];
-    ["Offset of field: drflac_cuesheet_track_index::offset"]
-        [::core::mem::offset_of!(drflac_cuesheet_track_index, offset) - 0usize];
-    ["Offset of field: drflac_cuesheet_track_index::index"]
-        [::core::mem::offset_of!(drflac_cuesheet_track_index, index) - 8usize];
-    ["Offset of field: drflac_cuesheet_track_index::reserved"]
-        [::core::mem::offset_of!(drflac_cuesheet_track_index, reserved) - 9usize];
+    ["Size of struct_drflac_cuesheet_track_index"]
+        [::core::mem::size_of::<struct_drflac_cuesheet_track_index>() - 16usize];
+    ["Alignment of struct_drflac_cuesheet_track_index"]
+        [::core::mem::align_of::<struct_drflac_cuesheet_track_index>() - 8usize];
+    ["Offset of field: struct_drflac_cuesheet_track_index::offset"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track_index, offset) - 0usize];
+    ["Offset of field: struct_drflac_cuesheet_track_index::index"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track_index, index) - 8usize];
+    ["Offset of field: struct_drflac_cuesheet_track_index::reserved"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track_index, reserved) - 9usize];
 };
+#[doc = " The order of members here is important because we map this directly to the raw data within the CUESHEET metadata block."]
+pub type drflac_cuesheet_track_index = struct_drflac_cuesheet_track_index;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct drflac_cuesheet_track {
+pub struct struct_drflac_cuesheet_track {
     pub offset: drflac_uint64,
     pub trackNumber: drflac_uint8,
     pub ISRC: [cty::c_char; 12usize],
@@ -1164,25 +1333,28 @@ pub struct drflac_cuesheet_track {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of drflac_cuesheet_track"][::core::mem::size_of::<drflac_cuesheet_track>() - 32usize];
-    ["Alignment of drflac_cuesheet_track"]
-        [::core::mem::align_of::<drflac_cuesheet_track>() - 8usize];
-    ["Offset of field: drflac_cuesheet_track::offset"]
-        [::core::mem::offset_of!(drflac_cuesheet_track, offset) - 0usize];
-    ["Offset of field: drflac_cuesheet_track::trackNumber"]
-        [::core::mem::offset_of!(drflac_cuesheet_track, trackNumber) - 8usize];
-    ["Offset of field: drflac_cuesheet_track::ISRC"]
-        [::core::mem::offset_of!(drflac_cuesheet_track, ISRC) - 9usize];
-    ["Offset of field: drflac_cuesheet_track::isAudio"]
-        [::core::mem::offset_of!(drflac_cuesheet_track, isAudio) - 21usize];
-    ["Offset of field: drflac_cuesheet_track::preEmphasis"]
-        [::core::mem::offset_of!(drflac_cuesheet_track, preEmphasis) - 22usize];
-    ["Offset of field: drflac_cuesheet_track::indexCount"]
-        [::core::mem::offset_of!(drflac_cuesheet_track, indexCount) - 23usize];
-    ["Offset of field: drflac_cuesheet_track::pIndexPoints"]
-        [::core::mem::offset_of!(drflac_cuesheet_track, pIndexPoints) - 24usize];
+    ["Size of struct_drflac_cuesheet_track"]
+        [::core::mem::size_of::<struct_drflac_cuesheet_track>() - 32usize];
+    ["Alignment of struct_drflac_cuesheet_track"]
+        [::core::mem::align_of::<struct_drflac_cuesheet_track>() - 8usize];
+    ["Offset of field: struct_drflac_cuesheet_track::offset"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track, offset) - 0usize];
+    ["Offset of field: struct_drflac_cuesheet_track::trackNumber"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track, trackNumber) - 8usize];
+    ["Offset of field: struct_drflac_cuesheet_track::ISRC"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track, ISRC) - 9usize];
+    ["Offset of field: struct_drflac_cuesheet_track::isAudio"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track, isAudio) - 21usize];
+    ["Offset of field: struct_drflac_cuesheet_track::preEmphasis"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track, preEmphasis) - 22usize];
+    ["Offset of field: struct_drflac_cuesheet_track::indexCount"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track, indexCount) - 23usize];
+    ["Offset of field: struct_drflac_cuesheet_track::pIndexPoints"]
+        [::core::mem::offset_of!(struct_drflac_cuesheet_track, pIndexPoints) - 24usize];
 };
+pub type drflac_cuesheet_track = struct_drflac_cuesheet_track;
 unsafe extern "C" {
+    #[doc = "Initializes a cuesheet track iterator. This can be used for iterating over the cuesheet tracks in a CUESHEET metadata\nblock."]
     pub fn drflac_init_cuesheet_track_iterator(
         pIter: *mut drflac_cuesheet_track_iterator,
         trackCount: drflac_uint32,
@@ -1190,6 +1362,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
+    #[doc = " Goes to the next cuesheet track in the given iterator. If DRFLAC_FALSE is returned it means there are no more comments."]
     pub fn drflac_next_cuesheet_track(
         pIter: *mut drflac_cuesheet_track_iterator,
         pCuesheetTrack: *mut drflac_cuesheet_track,
