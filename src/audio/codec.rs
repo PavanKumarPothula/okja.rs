@@ -1,7 +1,6 @@
 pub mod codec {
 
     use core::{ffi::c_void, i16, ptr};
-
     use cty;
     use defmt::info;
     use heapless::{String, Vec};
@@ -18,6 +17,46 @@ pub mod codec {
 
     // use claxon::flacreader;
     // use cty::;
+
+    unsafe extern "C" {
+        pub fn malloc(size: usize) -> *mut u8;
+
+        pub fn malloc_internal(size: usize) -> *mut u8;
+
+        pub fn free(ptr: *mut u8);
+
+        pub fn free_internal(ptr: *mut u8);
+
+        pub fn realloc_internal(ptr: *mut u8, size: usize) -> *mut u8;
+
+        pub fn calloc(number: u32, size: usize) -> *mut u8;
+
+        pub fn calloc_internal(number: u32, size: usize) -> *mut u8;
+
+        pub fn get_free_internal_heap_size() -> usize;
+    }
+
+    // Wrapper pAllocCallbacks
+    #[unsafe(no_mangle)]
+    extern "C" fn my_malloc(sz: usize, pUserData: *mut cty::c_void) -> *mut cty::c_void {
+        unsafe { malloc(sz) as *mut c_void }
+    }
+
+    #[unsafe(no_mangle)]
+    extern "C" fn my_realloc(
+        p: *mut cty::c_void,
+        sz: usize,
+        pUserData: *mut cty::c_void,
+    ) -> *mut cty::c_void {
+        unsafe { realloc_internal(p as *mut u8, sz) as *mut c_void }
+    }
+
+    #[unsafe(no_mangle)]
+    unsafe extern "C" fn my_free(p: *mut cty::c_void, pUserData: *mut cty::c_void) {
+        unsafe {
+            free(p as *mut u8);
+        }
+    }
     pub struct DecoderResult {
         pub is_eof: bool,
         pub memory_pos: usize,
@@ -78,11 +117,17 @@ pub mod codec {
                 "flac" => {
                     // this actually can happen only once, instead of happening for every fileopen
                     // unsafe { drflac_open_memory_with_metadata(p_data_const,p_data_const.len(),Some(on_meta_read),cty::NULL ,pAllocCallbacks); };
+
                     unsafe {
                         let decoder_obj = drflac_open_memory(
                             p_data_const.as_ptr() as *const c_void,
                             p_data_const.len(),
-                            ptr::null(),
+                            &drflac_allocation_callbacks {
+                                pUserData: ptr::null::<u8>() as *mut c_void,
+                                onMalloc: Some(my_malloc),
+                                onRealloc: Some(my_realloc),
+                                onFree: Some(my_free),
+                            } as *const drflac_allocation_callbacks,
                         );
                         // info! {"totalPCMFrameCount:{}",
                         // (*decoder_obj).totalPCMFrameCount};
