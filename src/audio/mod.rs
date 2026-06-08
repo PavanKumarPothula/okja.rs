@@ -224,7 +224,7 @@ pub async fn player_task(dac_peripherals: DACResources) {
             .unwrap();
 
         // let samples_to_write: Vec<i16, 512> = Vec::from([0; 512]);
-        let samples_to_write= [0; 512];
+        let mut samples_to_write= [0; 512];
         let mut frame_size_bytes: usize;
 
         info!("Starting the buff filler");
@@ -245,8 +245,8 @@ pub async fn player_task(dac_peripherals: DACResources) {
             );
             match current_play_pause_state {
                 PlayPauseState::Play => {
-                    const FRAMES_TO_READ: u64 = 1;
-                    let frames_read = decoder.get_pcm_samples(FRAMES_TO_READ, &samples_to_write);
+                    const FRAMES_TO_READ: u64 = 256;
+                    let frames_read = decoder.get_pcm_samples(FRAMES_TO_READ, &mut samples_to_write);
                     info! {"FramesRead:{}",frames_read};
                     if frames_read == 0 {
                         info!("EOF breaking out");

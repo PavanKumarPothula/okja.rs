@@ -97,15 +97,16 @@ pub mod codec {
                 _ => panic!("what!"),
             }
         }
-        pub fn get_pcm_samples(&mut self, frames_to_read: u64, pcm_frames: &[i16]) -> u64 {
+        pub fn get_pcm_samples(&mut self, frames_to_read: u64, pcm_frames: &mut [i16]) -> u64 {
             match self {
                 Decoder::FLAC(current_metadata_container) => unsafe {
                     let frames_read = dr_flac_bindings::drflac_read_pcm_frames_s16(
                         current_metadata_container.decoder_obj,
                         frames_to_read,
-                        pcm_frames.as_ptr() as *mut i16,
+                        pcm_frames.as_mut_ptr() as *mut drflac_int16,
                     );
-                    info! {"pBuffOut:{}", &pcm_frames};
+                    info! {"pBuffOut is zero?:{}", pcm_frames.iter().all(|&x| x == 0)};
+                    info! {"pBuffOut :{}", pcm_frames};
                     frames_read
                 },
             }
