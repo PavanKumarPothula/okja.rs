@@ -15,6 +15,7 @@ fn build_and_gen_bind_ffi_code() {
         // .compiler("xtensa-esp32s3-none-elf")
         .include("vendor/dr_libs")
         .define("DR_FLAC_NO_STDIO", None)
+        .define("DR_FLAC_NO_SIMD", None)
         .define("DR_FLAC_IMPLEMENTATION", None)
         .file("vendor/dr_flac.c")
         .compile("dr_flac");
@@ -36,6 +37,12 @@ fn build_and_gen_bind_ffi_code() {
         // included header files changed.
         // .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .use_core()
+        // Disables camel case warnings for the entire file
+        .raw_line("#![allow(non_camel_case_types)]")
+        // Disables all other non-standard naming style warnings (snake_case, uppercase globals)
+        .raw_line("#![allow(nonstandard_style)]")
+        // Optional: Disables all clippy lints for the file
+        .raw_line("#![allow(clippy::all)]")
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.

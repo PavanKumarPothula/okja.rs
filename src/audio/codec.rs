@@ -1,6 +1,6 @@
 pub mod codec {
 
-    use core::{ffi::c_void, i16, ptr};
+    use core::{alloc::GlobalAlloc, ffi::c_void, i16, ptr};
     use cty;
     use defmt::info;
     use heapless::{String, Vec};
@@ -20,26 +20,68 @@ pub mod codec {
 
     unsafe extern "C" {
         pub fn malloc(size: usize) -> *mut u8;
-
-        pub fn malloc_internal(size: usize) -> *mut u8;
-
         pub fn free(ptr: *mut u8);
-
-        pub fn free_internal(ptr: *mut u8);
-
         pub fn realloc_internal(ptr: *mut u8, size: usize) -> *mut u8;
+    }
+    unsafe fn malloc_8_bytes_aligned_memory(size: usize) -> *mut u8 {
+        let total_size = size + 8;
 
-        pub fn calloc(number: u32, size: usize) -> *mut u8;
+        unsafe {
+            let ptr = esp_alloc::HEAP.alloc_caps(
+                esp_alloc::export::enumset::EnumSet::empty(),
+                core::alloc::Layout::from_size_align_unchecked(total_size, 8),
+            );
 
-        pub fn calloc_internal(number: u32, size: usize) -> *mut u8;
+            if ptr.is_null() {
+                return ptr;
+            }
 
-        pub fn get_free_internal_heap_size() -> usize;
+            *(ptr as *mut usize) = total_size;
+            ptr.offset(8)
+        }
     }
 
+    unsafe fn realloc_8_bytes_aligned_memory(ptr: *mut u8, new_size: usize) -> *mut u8 {
+        unsafe extern "C" {
+            fn memcpy(d: *mut u8, s: *const u8, l: usize);
+        }
+
+        unsafe {
+            let p = malloc_8_bytes_aligned_memory(new_size);
+            if !p.is_null() && !ptr.is_null() {
+                let len = usize::min(
+                    (ptr as *const u32).sub(1).read_volatile() as usize - 8,
+                    new_size,
+                );
+                memcpy(p, ptr, len);
+                free_8_byte_aligned_mem(ptr);
+            }
+            p
+        }
+    }
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn free_8_byte_aligned_mem(ptr: *mut u8) {
+        if ptr.is_null() {
+            return;
+        }
+
+        unsafe {
+            let ptr = ptr.offset(-8);
+            let total_size = *(ptr as *const usize);
+            esp_alloc::HEAP.dealloc(
+                ptr,
+                core::alloc::Layout::from_size_align_unchecked(total_size, 8),
+            )
+        }
+    }
     // Wrapper pAllocCallbacks
     #[unsafe(no_mangle)]
     extern "C" fn my_malloc(sz: usize, pUserData: *mut cty::c_void) -> *mut cty::c_void {
-        unsafe { malloc(sz) as *mut c_void }
+        // let x = malloc(sz);
+        let x = unsafe { malloc_8_bytes_aligned_memory(sz) };
+        info! {"malloc addr: {}",defmt::Debug2Format(&x)};
+        unsafe { info! {"malloc value: {}",defmt::Debug2Format(&(*x))} }
+        x as *mut c_void
     }
 
     #[unsafe(no_mangle)]
@@ -48,14 +90,21 @@ pub mod codec {
         sz: usize,
         pUserData: *mut cty::c_void,
     ) -> *mut cty::c_void {
-        unsafe { realloc_internal(p as *mut u8, sz) as *mut c_void }
+        // unsafe { realloc_internal(p as *mut u8, sz) as *mut c_void }
+        let x = unsafe { realloc_8_bytes_aligned_memory(p as *mut u8, sz) };
+        info! {"realloc addr: {}",defmt::Debug2Format(&x)};
+        unsafe { info! {"realloc value: {}",defmt::Debug2Format(&(*x))} }
+        x as *mut c_void
     }
 
     #[unsafe(no_mangle)]
     unsafe extern "C" fn my_free(p: *mut cty::c_void, pUserData: *mut cty::c_void) {
-        unsafe {
-            free(p as *mut u8);
-        }
+        // unsafe {
+        //     free(p as *mut u8);
+        // }
+        let x = unsafe { free(p as *mut u8) };
+        info! {"free addr: {}",defmt::Debug2Format(&p)};
+        // unsafe { info! {"free value: {}",defmt::Debug2Format(&(*x))} }
     }
     pub struct DecoderResult {
         pub is_eof: bool,
