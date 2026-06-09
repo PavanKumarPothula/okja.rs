@@ -80,7 +80,9 @@ pub mod codec {
         // let x = malloc(sz);
         let x = unsafe { malloc_8_bytes_aligned_memory(sz) };
         info! {"malloc addr: {}",defmt::Debug2Format(&x)};
-        unsafe { info! {"malloc value: {}",defmt::Debug2Format(&(*x))} }
+        unsafe {
+            info! {"malloc value: {}",defmt::Debug2Format(&(*x))}
+        }
         x as *mut c_void
     }
 
@@ -93,7 +95,9 @@ pub mod codec {
         // unsafe { realloc_internal(p as *mut u8, sz) as *mut c_void }
         let x = unsafe { realloc_8_bytes_aligned_memory(p as *mut u8, sz) };
         info! {"realloc addr: {}",defmt::Debug2Format(&x)};
-        unsafe { info! {"realloc value: {}",defmt::Debug2Format(&(*x))} }
+        unsafe {
+            info! {"realloc value: {}",defmt::Debug2Format(&(*x))}
+        }
         x as *mut c_void
     }
 
@@ -108,9 +112,8 @@ pub mod codec {
     }
     pub struct DecoderResult {
         pub is_eof: bool,
-        pub memory_pos: usize,
-        // pub decoded_frame: Option<DecodedFrame>,
-        pub decoded_frame: dr_flac_bindings::drflac_frame,
+        pub currentPCMFrameIdx: u64,
+        pub framesRead: u64,
     }
     // #[derive(defmt::format)]
     #[derive(Default, Debug)]
@@ -191,7 +194,11 @@ pub mod codec {
                 _ => panic!("what!"),
             }
         }
-        pub fn get_pcm_samples(&mut self, frames_to_read: u64, pcm_frames: &mut [i16]) -> u64 {
+        pub fn get_pcm_samples(
+            &mut self,
+            frames_to_read: u64,
+            pcm_frames: &mut [i16],
+        ) -> DecoderResult {
             match self {
                 Decoder::FLAC(current_metadata_container) => unsafe {
                     let frames_read = dr_flac_bindings::drflac_read_pcm_frames_s16(
@@ -200,8 +207,17 @@ pub mod codec {
                         pcm_frames.as_mut_ptr() as *mut drflac_int16,
                     );
                     info! {"pBuffOut is zero?:{}", pcm_frames.iter().all(|&x| x == 0)};
+
                     // info! {"pBuffOut :{}", pcm_frames};
-                    frames_read
+                    DecoderResult {
+                        framesRead: frames_read,
+                        currentPCMFrameIdx: current_metadata_container
+                            .decoder_obj
+                            .as_ref()
+                            .unwrap()
+                            .currentPCMFrame,
+                        is_eof: false,
+                    }
                 },
             }
         }

@@ -154,9 +154,9 @@ async fn main(spawner: Spawner) {
         file_name: AUDIO_FILENAME,
         file_bytes: FLAC_AUDIO,
     };
-    AUDIO_DECODER.reset();
-    AUDIO_DECODER.signal(file_info);
     loop {
+        AUDIO_DECODER.reset();
+        AUDIO_DECODER.signal(file_info);
         PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Play);
         Timer::after(Duration::from_secs(10)).await;
         PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Pause);

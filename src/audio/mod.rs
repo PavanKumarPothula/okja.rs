@@ -29,6 +29,7 @@ use tlv320dac3100::typedefs::*;
 use crate::audio::codec::codec::Decoder;
 use crate::{DACPeripherals, DACResources};
 
+#[derive(Clone, Copy, Debug)]
 pub struct FileInfo {
     pub file_name: &'static str,
     pub file_bytes: &'static [u8],
@@ -250,10 +251,11 @@ pub async fn player_task(dac_peripherals: DACResources) {
             match current_play_pause_state {
                 PlayPauseState::Play => {
                     let frames_to_read = (NUM_SAMPLES_PER_CALL / 2) as u64;
-                    let frames_read =
+                    let decoder_meta =
                         decoder.get_pcm_samples(frames_to_read, &mut samples_to_write);
-                    info! {"FramesRead:{}",frames_read};
-                    if frames_read == 0 {
+                    info! {"FramesRead:{}",decoder_meta.framesRead};
+                    info! {"currentSampleIdx:{}",decoder_meta.currentPCMFrameIdx};
+                    if decoder_meta.framesRead == 0 {
                         info!("EOF breaking out");
                         break;
                     }
@@ -282,11 +284,11 @@ pub async fn player_task(dac_peripherals: DACResources) {
                     .available()
                     .inspect_err(|e: &dma::DmaError| info!("DMAError: {}", e))
                     .unwrap();
-                info!("AUDIOTASK: Available Bytes: {}", dma_available_bytes);
                 if dma_available_bytes == 0 {
                     // info!("DMA full");
                     // embassy_time::Timer::after(Duration::from_nanos(10)).await;
                 } else {
+                info!("AUDIOTASK: Available Bytes: {}", dma_available_bytes);
                     // info!("Writing to the DMA");
                     chunk_end_index = min(
                         frame_size_bytes / 2,
@@ -310,9 +312,10 @@ pub async fn player_task(dac_peripherals: DACResources) {
                         .inspect_err(|e| info!("DMAError: {}", e))
                         .unwrap();
                     chunk_start_index = chunk_end_index;
-                }
-                if chunk_start_index >= frame_size_bytes / 2 {
-                    break;
+
+                    if chunk_start_index >= frame_size_bytes / 2 {
+                        break;
+                    }
                 }
             }
         }
