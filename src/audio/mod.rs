@@ -224,7 +224,7 @@ pub async fn player_task(dac_peripherals: DACResources) {
             .unwrap();
 
         // let samples_to_write: Vec<i16, 512> = Vec::from([0; 512]);
-        let mut samples_to_write = [0; 512];
+        let mut samples_to_write= [0; 512];
         let mut frame_size_bytes: usize;
 
         info!("Starting the buff filler");
@@ -246,8 +246,7 @@ pub async fn player_task(dac_peripherals: DACResources) {
             match current_play_pause_state {
                 PlayPauseState::Play => {
                     const FRAMES_TO_READ: u64 = 256;
-                    let frames_read =
-                        decoder.get_pcm_samples(FRAMES_TO_READ, &mut samples_to_write);
+                    let frames_read = decoder.get_pcm_samples(FRAMES_TO_READ, &mut samples_to_write);
                     info! {"FramesRead:{}",frames_read};
                     if frames_read == 0 {
                         info!("EOF breaking out");
@@ -268,26 +267,25 @@ pub async fn player_task(dac_peripherals: DACResources) {
                     .available()
                     .inspect_err(|e: &dma::DmaError| info!("DMAError: {}", e))
                     .unwrap();
-                //info!("AUDIOTASK: Available Bytes: {}", dma_available_bytes);
-                //info!(
-                // "AUDIOTASK: Bytes Contents: {}",
-                // defmt::Debug2Format(&samples_to_write)
-                // );
-                //info!("AUDIOTASK: Bytes to Write: {}", frame_size_bytes);
+                info!("AUDIOTASK: Available Bytes: {}", dma_available_bytes);
+                info!(
+                    "AUDIOTASK: Bytes Contents: {}",
+                    defmt::Debug2Format(&samples_to_write)
+                );
+                info!("AUDIOTASK: Bytes to Write: {}", frame_size_bytes);
                 if dma_available_bytes == 0 {
-                    // if dma_available_bytes < frame_size_bytes {
-                    //info!("DMA Full, waiting longer");
+                // if dma_available_bytes < frame_size_bytes {
+                    info!("DMA Full, waiting longer");
                     // embassy_time::Timer::after(Duration::from_nanos(10)).await;
                     embassy_futures::yield_now().await;
                 } else {
-                        let x = 
-                        samples_to_write.split_at(dma_available_bytes);
+                    let (to_write,samples_to_write) = samples_to_write.split_at(frame_size_bytes - dma_available_bytes);
 
-                    let to_write = x.0;
-                    samples_to_write = x.1.as_ptr();
-                    //info!("Writing to the DMA");
+                    info!("Writing to the DMA");
                     transfer
-                        .push(unsafe { from_raw_parts(to_write.as_ptr().cast(), to_write.len()) })
+                        .push(unsafe {
+                            from_raw_parts(to_write.as_ptr().cast(), to_write.len())
+                        })
                         .inspect_err(|e| info!("DMAError: {}", e))
                         .unwrap();
                     break;
