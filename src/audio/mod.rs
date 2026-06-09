@@ -2,6 +2,8 @@ pub(crate) mod codec;
 pub(crate) mod dr_flac_bindings;
 pub mod player;
 
+use core::cmp::min;
+use core::ops::Index;
 use core::slice::from_raw_parts;
 
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -31,7 +33,7 @@ pub struct FileInfo {
     pub file_name: &'static str,
     pub file_bytes: &'static [u8],
 }
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum PlayPauseState {
     Play,
     Pause,
@@ -184,7 +186,7 @@ pub async fn player_task(dac_peripherals: DACResources) {
         .with_ws(dac_peripherals.i2s_ws)
         .build(dma_tx_desc);
     let _index = 0;
-    dma_tx_buf.fill(0);
+    dma_tx_buf.fill(1);
     let mut i2s_resources = I2SResources {
         i2s_tx_writer,
         dma_tx_buf,
@@ -224,20 +226,22 @@ pub async fn player_task(dac_peripherals: DACResources) {
             .unwrap();
 
         // let samples_to_write: Vec<i16, 512> = Vec::from([0; 512]);
-        let mut samples_to_write= [0; 512];
+        //
+        const NUM_SAMPLES_PER_CALL: usize = 1024;
+        let mut samples_to_write = [0_i16; NUM_SAMPLES_PER_CALL];
         let mut frame_size_bytes: usize;
 
         info!("Starting the buff filler");
-        while
-        // pos <= file_bytes.len() &&
-        !AUDIO_DECODER.signaled() {
+        let mut last_player_state = PlayPauseState::Pause;
+        while !AUDIO_DECODER.signaled() {
             // info!("AUDIOTASK: Position:{}", pos);
             // info!("AUDIOTASK: Consumed:{}", decoder_result.memory_pos - pos);
             // info!("AUDIOTASK: isEOF:{}", decoder_result.is_eof);
             let current_play_pause_state = if PLAY_PAUSE_STATE.signaled() {
-                PLAY_PAUSE_STATE.wait().await
+                last_player_state = PLAY_PAUSE_STATE.wait().await;
+                last_player_state
             } else {
-                PlayPauseState::Pause
+                last_player_state
             };
             info!(
                 "Current State:{}",
@@ -245,8 +249,9 @@ pub async fn player_task(dac_peripherals: DACResources) {
             );
             match current_play_pause_state {
                 PlayPauseState::Play => {
-                    const FRAMES_TO_READ: u64 = 256;
-                    let frames_read = decoder.get_pcm_samples(FRAMES_TO_READ, &mut samples_to_write);
+                    let frames_to_read = (NUM_SAMPLES_PER_CALL / 2) as u64;
+                    let frames_read =
+                        decoder.get_pcm_samples(frames_to_read, &mut samples_to_write);
                     info! {"FramesRead:{}",frames_read};
                     if frames_read == 0 {
                         info!("EOF breaking out");
@@ -257,37 +262,56 @@ pub async fn player_task(dac_peripherals: DACResources) {
                     // samples_to_write.extend(repeat_n(0, 1000));
                     // samples_to_write.copy_from_slice(&[0;16*1024]);
                     // samples_to_write.fill(0_i16);
+                    embassy_time::Timer::after(Duration::from_nanos(10)).await;
                     // info!("In Pause State: Filling Sending filled zeros");
                 }
             }
             frame_size_bytes = samples_to_write.len() * 2;
 
+            // info!(
+            //     "AUDIOTASK: Bytes Contents: {}",
+            //     defmt::Debug2Format(&samples_to_write)
+            // );
+            info!("AUDIOTASK: Bytes to Write: {}", frame_size_bytes);
+            let mut chunk_start_index = 0;
+            let mut chunk_end_index = 0;
+
             loop {
+                // if true{break;}
                 let dma_available_bytes = transfer
                     .available()
                     .inspect_err(|e: &dma::DmaError| info!("DMAError: {}", e))
                     .unwrap();
                 info!("AUDIOTASK: Available Bytes: {}", dma_available_bytes);
-                info!(
-                    "AUDIOTASK: Bytes Contents: {}",
-                    defmt::Debug2Format(&samples_to_write)
-                );
-                info!("AUDIOTASK: Bytes to Write: {}", frame_size_bytes);
                 if dma_available_bytes == 0 {
-                // if dma_available_bytes < frame_size_bytes {
-                    info!("DMA Full, waiting longer");
+                    // info!("DMA full");
                     // embassy_time::Timer::after(Duration::from_nanos(10)).await;
-                    embassy_futures::yield_now().await;
                 } else {
-                    let (to_write,samples_to_write) = samples_to_write.split_at(frame_size_bytes - dma_available_bytes);
-
-                    info!("Writing to the DMA");
+                    // info!("Writing to the DMA");
+                    chunk_end_index = min(
+                        frame_size_bytes / 2,
+                        dma_available_bytes / 2 + chunk_start_index,
+                    );
+                    info!("AUDIOTASK: startIDX:{}", chunk_start_index);
+                    info!("AUDIOTASK: endIDX:{}", chunk_end_index);
+                    // info!(
+                    //     "AUDIOTASK: Writing:{}",
+                    //     samples_to_write[chunk_start_index..chunk_end_index]
+                    // );
                     transfer
                         .push(unsafe {
-                            from_raw_parts(to_write.as_ptr().cast(), to_write.len())
+                            from_raw_parts(
+                                samples_to_write[chunk_start_index..chunk_end_index]
+                                    .as_ptr()
+                                    .cast(),
+                                (chunk_end_index - chunk_start_index) * 2,
+                            )
                         })
                         .inspect_err(|e| info!("DMAError: {}", e))
                         .unwrap();
+                    chunk_start_index = chunk_end_index;
+                }
+                if chunk_start_index >= frame_size_bytes / 2 {
                     break;
                 }
             }

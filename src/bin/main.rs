@@ -158,7 +158,7 @@ async fn main(spawner: Spawner) {
     AUDIO_DECODER.signal(file_info);
     loop {
         PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Play);
-        Timer::after(Duration::from_secs(5)).await;
+        Timer::after(Duration::from_secs(10)).await;
         PLAY_PAUSE_STATE.signal(audio::PlayPauseState::Pause);
         Timer::after(Duration::from_secs(1)).await;
     }

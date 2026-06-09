@@ -200,7 +200,7 @@ pub mod codec {
                         pcm_frames.as_mut_ptr() as *mut drflac_int16,
                     );
                     info! {"pBuffOut is zero?:{}", pcm_frames.iter().all(|&x| x == 0)};
-                    info! {"pBuffOut :{}", pcm_frames};
+                    // info! {"pBuffOut :{}", pcm_frames};
                     frames_read
                 },
             }
