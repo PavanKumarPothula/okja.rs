@@ -3,9 +3,10 @@ pub(crate) mod dr_flac_bindings;
 pub mod player;
 
 use core::cmp::min;
-use core::ops::Index;
 use core::slice::from_raw_parts;
 
+use defmt::info;
+use defmt_rtt as _;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, block_for};
@@ -15,14 +16,10 @@ use esp_hal::i2c::master::Config as I2CConfig;
 use esp_hal::i2s::master::{Channels, Config as I2SConfig, DataFormat, I2s, I2sTx, UnitConfig};
 use esp_hal::time::Rate;
 use esp_hal::{Blocking, dma, dma_circular_buffers, i2c};
-// use esp_println::{self as _, info};
-use defmt::info;
-use defmt_rtt as _;
 
 // use mousefood::ratatui::Terminal;
 // use mousefood::*;
 
-use heapless::Vec;
 use tlv320dac3100::TLV320DAC3100;
 use tlv320dac3100::typedefs::*;
 
@@ -134,16 +131,6 @@ pub fn init(r: DACPeripherals<'static>) -> DACResources {
         .set_class_d_spk_driver(OutputStage::Gain6dB, false)
         .expect("Error setting class D spk driver");
 
-    // // // dac_obj
-    // // //     .set_micbias(false, true, MicBiasOutput::PoweredAVDD)
-    // //     .expect("Error setting micbias");
-    // dac_obj
-    //     .set_headset_detection(
-    //         true,
-    //         HeadsetDetectionDebounce::Debounce16ms,
-    //         HeadsetButtonPressDebounce::Debounce0ms,
-    //     )
-    //     .expect("Error setting headset detection");
     dac_obj
         .set_int1_control_register(true, true, false, false, false, false)
         .expect("Error setting int1 control register");
@@ -226,8 +213,6 @@ pub async fn player_task(dac_peripherals: DACResources) {
             .write_dma_circular(i2s_resources.dma_tx_buf)
             .unwrap();
 
-        // let samples_to_write: Vec<i16, 512> = Vec::from([0; 512]);
-        //
         const NUM_SAMPLES_PER_CALL: usize = 1024;
         let mut samples_to_write = [0_i16; NUM_SAMPLES_PER_CALL];
         let mut frame_size_bytes: usize;
@@ -235,8 +220,6 @@ pub async fn player_task(dac_peripherals: DACResources) {
         info!("Starting the buff filler");
         let mut last_player_state = PlayPauseState::Pause;
         while !AUDIO_DECODER.signaled() {
-            // info!("AUDIOTASK: Position:{}", pos);
-            // info!("AUDIOTASK: Consumed:{}", decoder_result.memory_pos - pos);
             // info!("AUDIOTASK: isEOF:{}", decoder_result.is_eof);
             let current_play_pause_state = if PLAY_PAUSE_STATE.signaled() {
                 last_player_state = PLAY_PAUSE_STATE.wait().await;
@@ -276,7 +259,7 @@ pub async fn player_task(dac_peripherals: DACResources) {
             // );
             info!("AUDIOTASK: Bytes to Write: {}", frame_size_bytes);
             let mut chunk_start_index = 0;
-            let mut chunk_end_index = 0;
+            let mut chunk_end_index;
 
             loop {
                 // if true{break;}
@@ -288,7 +271,7 @@ pub async fn player_task(dac_peripherals: DACResources) {
                     // info!("DMA full");
                     // embassy_time::Timer::after(Duration::from_nanos(10)).await;
                 } else {
-                info!("AUDIOTASK: Available Bytes: {}", dma_available_bytes);
+                    info!("AUDIOTASK: Available Bytes: {}", dma_available_bytes);
                     // info!("Writing to the DMA");
                     chunk_end_index = min(
                         frame_size_bytes / 2,
